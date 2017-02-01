@@ -23,21 +23,7 @@ classdef DSP
             obj.dz       = Channel.Lf/Ns_bprop;
 
         end
-        
-        function [ux,uy]    = A2D (obj,Irx,sps)
-            
-            DecimationRate = sps / 2;                        %oversampling
-            
-            Irxdec = [  decimate( Irx(:,1), DecimationRate,16,'fir' ) ...
-                        decimate( Irx(:,2), DecimationRate,16,'fir' ) ...
-                        decimate( Irx(:,3), DecimationRate,16,'fir' ) ...
-                        decimate( Irx(:,4), DecimationRate,16,'fir' ) ];
-            
-            ux = complex( Irxdec(:,1), Irxdec(:,2) );
-            uy = complex( Irxdec(:,3), Irxdec(:,4) );
-            
-        end
-        
+       
         
         function sig        = DBP_scalar_ssfm (dsp,Pavg,sig)
             
@@ -49,7 +35,7 @@ classdef DSP
             
             ux    = get(sig,'FIELDX');
                        
-            if abs(channel.alphalin*dz) > 1e-6
+            if abs(-channel.alphalin*dz) > 1e-6
                 Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
             else
                 Leff     = dz;
@@ -57,7 +43,7 @@ classdef DSP
             
             z    = dsp.dz*(0:dsp.nstep-1);
             
-            xi   = -channel.gamma*Leff*exp(-channel.alphalin*z)*Pavg;
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
            
             halfdz      = dz/2;
             
@@ -66,7 +52,7 @@ classdef DSP
             %                              DZ SPM                        %
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             ux = dsp.scalar_lin_step(-beta*halfdz,ux);
-            ux = dsp.scalar_nl_step(xi,ux,1);
+            ux = dsp.scalar_nl_step(xi(1),ux);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             for i=2:dsp.nstep  
@@ -76,7 +62,7 @@ classdef DSP
                 %                           DZ SPM                       %
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 ux = dsp.scalar_lin_step(-beta*dz,ux);
-                ux = dsp.scalar_nl_step(xi,ux,i);
+                ux = dsp.scalar_nl_step(xi(i),ux);
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                
             end
@@ -162,7 +148,7 @@ classdef DSP
             
             z    = dsp.dz*(0:dsp.nstep-1);
             
-            xi   = -channel.gamma*Leff*exp(-channel.alphalin*z)*Pavg;
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
            
             halfdz      = dz/2;
             
@@ -259,10 +245,10 @@ classdef DSP
             
         end
         
-        function ux         = scalar_nl_step(obj,xi,ux,step)
+        function ux         = scalar_nl_step(obj,xi,ux)
             
             pow = real(ux).^2 + imag(ux).^2;
-            ux = ux.*exp(-1i*xi(step).*pow);
+            ux = ux.*exp(-1i*xi*pow);
             
         end
         

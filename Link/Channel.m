@@ -50,8 +50,9 @@ classdef Channel
             
             ch.alphalin = (log(10)*1e-4)*alphadB;               % [m^-1]
             
-            ch.gamma    = 2*pi*ch.n2 /...
-                (lambda * ch.aeff) * 1e21;                        % [1/W/m]
+            ch.gamma    = 1.27e-3;
+%             ch.gamma    = 2*pi*ch.n2 /...
+%                 (lambda * ch.aeff) * 1e21;                        % [1/W/m]
             
 %             b2 = -21.67e-27;
              ch.b2   = -ch.lambda^2 /...
@@ -81,12 +82,6 @@ classdef Channel
             end
         end
         
-        function sig = propagates(ch,Pavg,sig)            
-            ch_str  = struct('b2',ch.b2,'b3',ch.b3,'dz',ch.dz,'alphalin',ch.alphalin,'gamma',ch.gamma,'nstep',ch.nstep);
-            sig_str = struct('FIELDX',sig.FIELDX','SYMBOLRATE',sig.SYMBOLRATE,'FN',sig.FN);
-            sig_str = f_scalar_ssfm_mex(ch_str,Pavg,sig_str);
-            set(sig,'FIELDX',sig_str.FIELDX');
-        end
   
         function sig = scalar_ssfm(ch,Pavg,sig)
             
@@ -264,7 +259,7 @@ classdef Channel
         function ux         = scalar_nl_step(ch,ux,xi)
                         
             pow = real(ux).^2 + imag(ux).^2;
-            ux  = ux.*exp(-1i*xi.*pow);
+            ux  = ux.*exp(-1i*xi*pow);
             
         end
         

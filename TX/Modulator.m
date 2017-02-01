@@ -8,16 +8,16 @@ classdef Modulator
     methods (Static = true)
         function E = ApplyModulation(E, patmat_tx, sig , pls)
             
-            Nt = sig.NT;
-            nfft = sig.NT * sig.NSYMB;
-            usrad2=1./sqrt(2.);
-            a=usrad2*(patmat_tx(:,1)+1i*patmat_tx(:,2));
-            H=filt(pls,sig.FN);
+            Nt     = sig.NT;
+            nfft   = sig.NT * sig.NSYMB;
+            usrad2 = 1./sqrt(2.);
+            a      = usrad2*(patmat_tx(:,1)+1i*patmat_tx(:,2));
+            H      = filt(pls,sig.FN);
             
             %normalizzazione per avere energia unitaria
-            dt = 1/Nt;
-            norm=sqrt(nfft/dt/sum(abs(H).^2));
-            H=H*norm;
+            dt   = 1/Nt;
+            norm = sqrt(nfft/dt/sum(abs(H).^2));
+            H    = H*norm;
 
             %sequenza di impulsi di tipo delta (con Nxs campioni per simbolo) modulati
             %secondo i simboli dati
