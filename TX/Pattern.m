@@ -66,7 +66,7 @@ classdef Pattern
                 mvm = floor(ns/q*((1:q)-1));
                 tmat = zeros(q,2^ns); % columns: binary DeBruijn
                 for kk=1:q
-                    tmat(kk,:) = circshift(y,mvm(kk));
+                    tmat(kk,:) = circshift(y,[mvm(kk),0]);
                 end
                 y = 2.^(q-1:-1:0) * tmat ; % bin2dec conversion
             else
