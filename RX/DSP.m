@@ -1,6 +1,6 @@
 classdef DSP
     %DSP Summary of this class goes here
-    %   Detailed explanation goes here
+    %    Detailed explanation goes here
     
     properties
         ch
@@ -95,7 +95,7 @@ classdef DSP
             
             z    = dsp.dz*(0:dsp.nstep-1);
             
-            xi   = -channel.gamma*Leff*exp(-channel.alphalin*z)*Pavg;
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
            
             halfdz      = dz/2;
                 
@@ -200,7 +200,7 @@ classdef DSP
             
             z    = dsp.dz*(0:dsp.nstep-1);
             
-            xi   = -channel.gamma*Leff*exp(-channel.alphalin*z)*Pavg;
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
            
             halfdz      = dz/2;
             
@@ -271,6 +271,7 @@ classdef DSP
         
         function [ux]       = scalar_essfm_nl_step(obj,C,ux)
             
+            
             pow = real(ux).^2 + imag(ux).^2 ;
             
             M=length(pow);
@@ -285,6 +286,7 @@ classdef DSP
         end
         
         function [ux,uy]    = vec_nl_essfm_step(obj,C,ux,uy)
+            
             
             pow = real(ux).^2 + imag(ux).^2 + real(uy).^2 + imag(uy).^2;
             
@@ -303,3 +305,76 @@ classdef DSP
     end
     
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%             M=length(ux);
+%             N=length(C);
+%             
+%             % Alloca spazio per il segnale
+% %             y=zeros(M,1);
+%             % Calcola moduli quadri (con prolungamento periodico)
+%             xx=abs(ux).^2 + abs(uy).^2;
+%             xx=[xx(M-N+2:M);xx;xx(1:N-1)];    %periodicamente
+%             %xx=[0;xx;0];                     %con zeri
+%             
+%             % Duplica il vettore dei coefficienti per avere risposta simmetrica
+%             CC=[flipud(C);C(2:end)];
+%             
+%             % Filtra il vettore dei moduli quadri con i coefficienti del filtro dato:
+%             theta=conv(xx,CC,'valid');
+%             
+%             % Calcola il segnale in uscita:
+%             ux=ux.*exp(1i*theta);
+%             uy=uy.*exp(1i*theta);
+
+
+%             M=length(ux);
+%             N=length(C);
+%             
+%             % Alloca spazio per il segnale
+% %             y=zeros(M,1);
+%             % Calcola moduli quadri (con prolungamento periodico)
+%             xx=abs(ux).^2;
+%             xx=[xx(M-N+2:M);xx;xx(1:N-1)];    %periodicamente
+%             %xx=[0;xx;0];                     %con zeri
+%             
+%             % Duplica il vettore dei coefficienti per avere risposta simmetrica
+%             CC=[flipud(C);C(2:end)];
+%             
+%             % Filtra il vettore dei moduli quadri con i coefficienti del filtro dato:
+%             theta=conv(xx,CC,'valid');
+%             
+%             % Calcola il segnale in uscita:
+%             ux=ux.*exp(1i*theta);
+

@@ -1,4 +1,4 @@
-function [ f ] = vec_essfm_opt( sig,dsp,C,Nspan,Loss )
+function [ f ] = vec_essfm_opt( sig,dsp,C,Nspan,Loss,Hf )
 %VEC_ESSFM_OPT Summary of this function goes here
 %   Detailed explanation goes here
         rx_sig     = copy(sig);
@@ -15,6 +15,9 @@ function [ f ] = vec_essfm_opt( sig,dsp,C,Nspan,Loss )
         ux_rx   = get(rx_sig,'FIELDX'   );
         uy_rx   = get(rx_sig,'FIELDY'   );
         
+        ux_rx    = ifft(fft(ux_rx).*Hf);
+        uy_rx    = ifft(fft(uy_rx).*Hf);
+        
         ux_rx   = ux_rx(1:NT:end);
         uy_rx   = uy_rx(1:NT:end);
         ux_out  = ux_out(1:NT:end);
@@ -22,6 +25,7 @@ function [ f ] = vec_essfm_opt( sig,dsp,C,Nspan,Loss )
         
         rotx    = angle(mean(ux_rx.*conj(ux_out)));
         roty    = angle(mean(uy_rx.*conj(uy_out)));
+        
         ux_rx   = ux_rx*exp(-1i*rotx);
         uy_rx   = uy_rx*exp(-1i*roty);
         
