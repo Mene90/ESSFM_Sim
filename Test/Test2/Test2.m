@@ -1,6 +1,6 @@
 
-addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
-% addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
+% addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
+addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^6 2^8 2^10];
 n_prop_steps = 10;

@@ -50,9 +50,9 @@ classdef Channel
             
             ch.alphalin = (log(10)*1e-4)*alphadB;               % [m^-1]
             
-            ch.gamma    = 1.27e-3;
-%             ch.gamma    = 2*pi*ch.n2 /...
-%                 (lambda * ch.aeff) * 1e21;                        % [1/W/m]
+%             ch.gamma    = 1.27e-3;
+            ch.gamma    = 2*pi*ch.n2 /...
+                (lambda * ch.aeff) * 1e21;                        % [1/W/m]
             
 %             b2 = -21.67e-27;
              ch.b2   = -ch.lambda^2 /...
