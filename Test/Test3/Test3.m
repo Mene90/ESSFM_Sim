@@ -1,16 +1,16 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^6 2^8 2^10];
+symbols      = [2^12];
 n_prop_steps = 10;
 
-etasp = 3;
+etasp = 0;
 
 NS  = [1 8 12];
 Nc  = [1 1  1];
 dBm = (-3:4);
 
-for j = 1:length(symbols)
+for j = 1:length(etasp)
     for i = 1:length(NS)
         
         data_1{i} = BER_ESSFM_Linear_XY(NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp,0);
@@ -35,9 +35,8 @@ for j = 1:length(symbols)
     
     
     for i= 1:length(NS)
-        semilogy(   dBm , BER{i}(:,2), colors{i}  ,...
-            dBm , BER{i}(:,4), colors{i+3},...
-            dBm , BER{i}(:,6), colors{i+6});
+        plot(   dBm , BER{i}(:,2), colors{i}  ,...
+            dBm , BER{i}(:,4), colors{i+3});
         hold('on')
     end
     
@@ -52,9 +51,7 @@ for j = 1:length(symbols)
     xlabel('Power[dBm]');
     legend(legends{1,1}{1,1},legends{2,1}{1,1},...
         legends{3,1}{1,1},legends{4,1}{1,1},...
-        legends{5,1}{1,1},legends{6,1}{1,1},...
-        legends{7,1}{1,1},legends{8,1}{1,1},...
-        legends{9,1}{1,1});
+        legends{5,1}{1,1},legends{6,1}{1,1});
     
     savefig(fig,strcat('plot/',int2str(log2(symbols(j))),'_',...
                       int2str(n_prop_steps),'_',int2str(etasp),'.fig'))

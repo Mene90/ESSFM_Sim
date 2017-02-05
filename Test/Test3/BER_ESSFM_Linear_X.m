@@ -94,7 +94,7 @@ parfor nn=1:Plen
     sig       = Signal(Nsymb,Nt,symbrate);
     fmin      = @(C) essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
     
-    ampli                 = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
+%     ampli                 = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
     [pat{nn}(:,1), patmat]    = Pattern.debruijn(1,4,Nsymb);
     
@@ -105,7 +105,7 @@ parfor nn=1:Plen
     set(sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmat-1, sig, pls));
     
     for i = 1:Nspan
-        sig      = ampli.AddNoise(sig);
+%         sig      = ampli.AddNoise(sig);
         sig      = ch.scalar_ssfm(Pavg(nn),sig);
         
     end
