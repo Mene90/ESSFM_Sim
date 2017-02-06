@@ -6,6 +6,7 @@ symbols      = [2^16 2^18 2^20];
 n_prop_steps = 100;
 
 etasp = 4;
+gamma = 1.27e-3;
 
 NS  = [1 8 12];
 Nc  = [8 6  2];
@@ -16,7 +17,7 @@ for j = 1:length(symbols)
         
         data_1{i} = BER_ESSFM_XY(NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp);
         data_2{i} = BER_ESSFM_X (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp);
-        data_3{i} = BER_essfm_vs_ssfm (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp);
+        data_3{i} = BER_essfm_vs_ssfm (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp,gamma);
         
         BER{i}    = [data_1{i} data_2{i} data_3{i}];
         

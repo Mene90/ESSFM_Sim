@@ -1,4 +1,4 @@
-function [ data ] = BER_essfm_vs_ssfm(Nstep,NC,dBm,size_length,n_prop_steps,etasp)
+function [ data ] = BER_essfm_vs_ssfm(Nstep,NC,dBm,size_length,n_prop_steps,etasp,gamma)
 %BER_essfm_vs_ssfm Confronta la BER ottenuta utilizzando l'algoritmo
 %split-spet Fourier classico (SSFM) o migliorato (ESSFM) per backpropagation su link multispan.
 %
@@ -22,7 +22,7 @@ lambda = 1.55e-6;        % [um]
 alf=0.2;
 al=alf*0.230258509299405*1e-3;        % attenuation parameter (1/m)
 b2=-21.67e-27; %parametro di GVD
-gm=1.27e-3; %parametro di nonlinearità
+gm=gamma; %parametro di nonlinearità
 LL=1.2e5;      %lunghezza di propagazione
 Nspan=40;      %numero di span identiche
 % etasp=2;        %coeff. di emissione spontanea degli amplificatori
