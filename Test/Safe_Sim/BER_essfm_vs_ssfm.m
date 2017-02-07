@@ -112,7 +112,7 @@ SNR=Ps/Rs/N0;                                   %Es/N0
 % err_fin_enh_derot=zeros(1,Plen);
 BER_st=zeros(1,Plen);
 BER_enh=zeros(1,Plen);
-Copt=zeros(NC,Plen);
+% Copt=zeros(NC,Plen);
 tic
 for nn=1:Plen
     

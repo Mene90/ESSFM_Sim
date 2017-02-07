@@ -1,45 +1,74 @@
 
-addpath('/home/menelaos/MATLAB/Sim Marco/');
+% addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
+addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = 2^12;
-n_prop_steps = 100; 
+symbols      = [2^10 2^12];
+n_prop_steps = 10;
 
-NS = [2 4 12];
-Nc = [6 4 2];
-dBm = (-3:4);
+etasp = [2 6 8];
+gamma = 1.27e-3;
 
-etasp = 4;
+NS  = [10 10 10];
+Nc  = [ 0  2 4];
+dBm = (3:4);
 
-tic 
-for i = 1:length(NS)
-    data_1{i} = BER_ESSFM_vs_SSFM(NS(i),Nc(i),dBm , symbols, n_prop_steps,etasp);
-    data_2{i} = BER_essfm_vs_ssfm(NS(i),Nc(i),dBm , symbols, n_prop_steps,etasp);
-    BER{i}   = [data_1{i} data_2{i}];
+for k = 1:length(etasp)
+    for j = 1:length(symbols)
+        for  i = 1:length(NS)
+            
+            data_3{i} = BER_essfm_vs_ssfm (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp(k),gamma);
+            data_1{i} = BER_ESSFM_XY      (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp(k));
+            data_2{i} = BER_ESSFM_X       (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp(k));
+            
+            
+            BER_ESSFM{i} = [data_1{i}(:,2) data_2{i}(:,2) data_3{i}(:,2)];
+            
+        end
+        
+        
+        
+        fig = figure(j);
+        
+        colors  = {'-ob';'-og';'-or';...
+            '-+b';'-+g';'-+r';...
+            '-*b';'-*g';'-*r'};
+        
+        lgn = [];
+        for i = 1:length(NS)
+            
+            tmp(i,:)  = ({['ESSFM_{XY}           Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i))],...
+                ['ESSFM_X_1            Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i))],...
+                ['Safe_ESSFM_X_2       Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i))]});
+            
+            lgn           = [lgn tmp(i,:)];
+            
+        end
+        
+        
+        for i= 1:length(NS)
+            p1=semilogy(   dBm , BER_ESSFM{i}(:,1), colors{i}  ,...
+                dBm , BER_ESSFM{i}(:,2), colors{i+3},...
+                dBm , BER_ESSFM{i}(:,3), colors{i+6});
+            hold('on')
+        end
+        
+        t_ESSFM = strcat('propagation of',              {' '},'2^{', int2str(log2(symbols(j))) ,{'}'}, {' '}, ...
+            'symbols with'  ,              {' '}, int2str(n_prop_steps)        ,{' '}, ...
+            'steps and emission factor of',{' '}, int2str(etasp(k)));
+        
+        title(t_ESSFM);
+        
+        grid on;
+        ylabel('BER');
+        xlabel('Power[dBm]');
+        
+        legend(lgn)
+        
+        savefig(fig,strcat('plot/',int2str(log2(symbols(j))),'_',...
+            int2str(n_prop_steps),'_',int2str(etasp(k)),'.fig'))
+        
+        hold('off')
+        close(fig);
+        
+    end
 end
-toc
-
-figure(1);
-grid on;
-colors  = {'-ob';'-og';'-or';'-+b';'-+g';'-+r'};
-legends = {strcat('ESSFM_1  Ns =',{' '}, int2str(NS(1)),{' '},'Nc =',{' '}, int2str(Nc(1)));... 
-           strcat('ESSFM_2  Ns =',{' '}, int2str(NS(1)),{' '},'Nc =',{' '}, int2str(Nc(1)));...
-           strcat('ESSFM_1  Ns =',{' '}, int2str(NS(2)),{' '},'Nc =',{' '}, int2str(Nc(2)));...
-           strcat('ESSFM_2  Ns =',{' '}, int2str(NS(2)),{' '},'Nc =',{' '}, int2str(Nc(2)));...
-           strcat('ESSFM_1  Ns =',{' '}, int2str(NS(3)),{' '},'Nc =',{' '}, int2str(Nc(3)));...
-           strcat('ESSFM_2  Ns =',{' '}, int2str(NS(3)),{' '},'Nc =',{' '}, int2str(Nc(3)))};
-
-for i= 1:length(NS)
-semilogy(dBm , BER{i}(:,2), colors{i}, dBm , BER{i}(:,4), colors{i+3});
-hold('on')
-end
-t = strcat('Propagaion of',{' '}, int2str(symbols)     ,{' '}, ...
-           'symbols with' ,{' '}, int2str(n_prop_steps),{' '}, 'steps');
-title(t)
-ylabel('BER');
-xlabel('Power[dBm]');
-legend(legends{1,1}{1,1},legends{2,1}{1,1},...
-       legends{3,1}{1,1},legends{4,1}{1,1},...
-       legends{5,1}{1,1},legends{6,1}{1,1});
-
-
-

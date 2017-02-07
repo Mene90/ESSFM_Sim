@@ -1,4 +1,4 @@
-function [ data ] = BER_ESSFM_vs_SSFM(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
+function [ data ] = BER_ESSFM_X(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
 %% Example of FIELD propagation with single polarization
 % This example calculate the ber of the received field after
 % backpropagation. The programm is basically divided in slots. 
@@ -13,7 +13,7 @@ function [ data ] = BER_ESSFM_vs_SSFM(Nstep,NC,dBm,sym_length,n_prop_steps,etasp
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 LL        = 1.2e5;                % length [m]
 alphadB   = 0.2;                  % attenuation [dB/km]
-aeff      = 87;                   % effective area [um^2]
+aeff      = 80;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
 lambda    = 1550;                 % wavelength [nm] @ dispersion
 D         = 17;                   % dispersion [ps/nm/km] @ wavelength
@@ -32,7 +32,6 @@ ch        = Channel(LL,alphadB,lambda,aeff,n2,D,S,Ns_prop,pmd);
 
 Ns_bprop = Nstep;                   % SSFM and ESSFM backpropagation steps
 
-dsp     = DSP(ch,Ns_bprop);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
@@ -86,14 +85,18 @@ options = optimset('Algorithm','trust-region-reflective','Display','off',...
 C0        = zeros(NC,1);
 C0(1,1)   = 1;
 Loss      = 10^(-Gerbio*0.1);
-fmin      = @(C) essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for nn=1:Plen
+parfor nn=1:Plen
+    
+    dsp     = DSP(ch,Ns_bprop);    
+    sig       = Signal(Nsymb,Nt,symbrate);
+    fmin      = @(C) essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
     
     ampli                 = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
-    [pat(:,1), patmat]    = Pattern.debruijn(1,4,Nsymb);
+    [pat{nn}(:,1), patmat]    = Pattern.debruijn(1,4,Nsymb);
     
     E                     = Laser.GetLaserSource(Pavg(nn), nfft);
     
@@ -130,12 +133,15 @@ sig       = Signal(Nsymb,Nt,symbrate);
 Hf_BER        = transpose(filt(pls,sig.FN));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-for nn=1:Plen
+tic
+parfor nn=1:Plen
+    
+    dsp     = DSP(ch,Ns_bprop);
+    sig       = Signal(Nsymb,Nt,symbrate);
     
     ampli                     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
-    [patx(:,1), patmat_tx]    = Pattern.random(4,Nsymb);
+    [patx{nn}(:,1), patmat_tx]    = Pattern.random(4,Nsymb);
     
     E                         = Laser.GetLaserSource(Pavg(nn), nfft);
     
@@ -178,8 +184,10 @@ for nn=1:Plen
     avgber = [ber(patmat_st_rx,patmat_tx) ber(patmat_enh_rx,patmat_tx)];
     
     data(nn,:) = avgber;
-    display(['BER con SSFM = ', num2str(avgber(1)) ,char(9) 'BER con ESSFM = ',num2str(avgber(2))]);
+    display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
+             'BER con SSFM = ' , num2str(avgber(1)),char(9)...
+             'BER con ESSFM = ', num2str(avgber(2))            ]);
 end
-
+toc
 
 end  
