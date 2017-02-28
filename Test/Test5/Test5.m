@@ -1,16 +1,16 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^12];
-n_prop_steps = 30;
+symbols      = [2^16];
+n_prop_steps = 25;
 
-symbrate = 32;
+symbrate = 50;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
 
-NS  = [1,2];
-Nc  = [4,8];
+NS  = [1,2,4,8,16,25];
+Nc  = [2,4,8];
 tic
 parfor  i = 1:length(NS)
         ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
@@ -38,6 +38,7 @@ lgn = [];
 colors  = {'-ob';'-og';'-or';...
            '-+b';'-+g';'-+r';...
            '-*b';'-*g';'-*r'};
+       
 lgn     = ({['SSFM']});
 for i = 1:length(Nc)
     tmp(i,:)  = ({['ESSFM Nc = ' int2str(Nc(i))]});
