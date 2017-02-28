@@ -82,7 +82,7 @@ FIELDY_ENH_RX   = FIELDY_ENH_RX*exp(-1i*roty_enh);
 snr_x = SNR(FIELDX_ENH_RX(1:sig.NT:end),FIELDX_TX(1:sig.NT:end));
 snr_y = SNR(FIELDY_ENH_RX(1:sig.NT:end),FIELDY_TX(1:sig.NT:end));
 
-avg_snr = (0.5*(snr_x+snr_y));
+avg_snr = 10*log10(0.5*(snr_x+snr_y));
 
 end
 

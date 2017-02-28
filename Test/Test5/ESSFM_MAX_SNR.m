@@ -36,6 +36,6 @@ Nsymb     = sym_length;                % number of symbols
 Nt        = 2;                         % points x symbol
 sig       = Signal(Nsymb,Nt,symbrate);
 
-max_snr   = 10*log10(-essfm_maxSNR(ch,dsp,sig,t_sig,NC,etasp,Nspan));
+max_snr   = -essfm_maxSNR(ch,dsp,sig,t_sig,NC,etasp,Nspan);
 end
 

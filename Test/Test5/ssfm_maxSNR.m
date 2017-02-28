@@ -44,8 +44,8 @@ system.Loss      = Loss;
 system.mfil_snr  = Hf_SNR;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-options = optimset('Display','iter','TolX',1e-1);
+options = optimset('Display','off','TolX',3e-1);
 funmax = @(Ps_dBm) -par_ssfm_snr(Ps_dBm,ch,dsp,sig,ampli,system);
 
-[P_max,max_snr] = fminbnd(funmax,-3,14,options);
+[P_max,max_snr] = fminbnd(funmax,-2,10,options);
 end

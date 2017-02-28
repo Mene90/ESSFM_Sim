@@ -1,10 +1,10 @@
-function [ max_snr ] = SSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,etasp,Nspan )
+function [ max_snr ] = SSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,R,etasp,Nspan)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-LL        = 1.2e5;                % length [m]
+LL        = 1e5;                % length [m]
 alphadB   = 0.2;                  % attenuation [dB/km]
-aeff      = 80;                   % effective area [um^2]
+aeff      = 85;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
 lambda    = 1550;                 % wavelength [nm] @ dispersion
 D         = 17;                   % dispersion [ps/nm/km] @ wavelength
@@ -22,14 +22,14 @@ dsp       = DSP(ch,Ns_bprop);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-symbrate  = 32;                  % symbol rate [Gbaud]
+symbrate  = R;                  % symbol rate [Gbaud]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                      Trainin Signal parameters                         %
+%                         Signal parameters                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Nsymb     = sym_length;                % number of symbols
 Nt        = 2;                         % points x symbol
 sig       = Signal(Nsymb,Nt,symbrate);
 
-max_snr   = ssfm_maxSNR(ch,dsp,sig,etasp,Nspan);
+max_snr   = -ssfm_maxSNR(ch,dsp,sig,etasp,Nspan);
 end
 
