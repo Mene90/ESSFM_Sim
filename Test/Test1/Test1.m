@@ -2,29 +2,29 @@
 addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^22];
+symbols      = [2^12];
 n_prop_steps = 10;
 
-etasp = [2 4];
+etasp = [5];
 gamma = 1.27e-3;
 
 NS  = [10 10 10];
-Nc  = [ 0  2 16];
+Nc  = [ 0 0 0];
 dBm = (-3:4);
 
 for k = 1:length(etasp)
     for j = 1:length(symbols)
+        tic
         for  i = 1:length(NS)
             
             data_3{i} = BER_essfm_vs_ssfm (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp(k),gamma);
             data_1{i} = BER_ESSFM_XY      (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp(k));
             data_2{i} = BER_ESSFM_X       (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp(k));
-            
-            
+           
             BER_ESSFM{i} = [data_1{i}(:,2) data_2{i}(:,2) data_3{i}(:,2)];
             
         end
-        
+        toc
         
         
         fig = figure(j);

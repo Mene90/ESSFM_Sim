@@ -113,8 +113,8 @@ SNR=Ps/Rs/N0;                                   %Es/N0
 BER_st=zeros(1,Plen);
 BER_enh=zeros(1,Plen);
 % Copt=zeros(NC,Plen);
-tic
-for nn=1:Plen
+
+parfor nn=1:Plen
     
     %Segnale all'uscita della fibra con propagazione "esatta" (SSFM a tanti passi)
     urx=u;
@@ -155,7 +155,7 @@ for nn=1:Plen
     [C,err]=lsqnonlin(fmin,C0,[],[],options); 
     Copt(:,nn) = C;
 end
-tic
+
 %% Simulazione per calcolo della BER
 parfor nn=1:Plen    
         
@@ -203,12 +203,12 @@ parfor nn=1:Plen
     BER_st(nn)=0.5*(mean(ar_st~=ar_tx)+mean(ai_st~=ai_tx));
     BER_enh(nn)=0.5*(mean(ar_enh~=ar_tx)+mean(ai_enh~=ai_tx)); 
     
-    display(['Power[dBm] = '   , num2str(dBm(nn))    ,char(9)...
-             'BER con SSFM = ' , num2str(BER_st(nn)) ,char(9)...
-             'BER con ESSFM = ', num2str(BER_enh(nn))            ]);
+%     display(['Power[dBm] = '   , num2str(dBm(nn))    ,char(9)...
+%              'BER con SSFM = ' , num2str(BER_st(nn)) ,char(9)...
+%              'BER con ESSFM = ', num2str(BER_enh(nn))            ]);
    
 end
-toc
+
 data = [BER_st;BER_enh]';
 % data=[Ps_dBm;SNRdB;BER_st;BER_enh]';
 % data = Copt';
