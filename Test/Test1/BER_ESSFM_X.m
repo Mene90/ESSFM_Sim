@@ -88,7 +88,7 @@ Loss      = 10^(-Gerbio*0.1);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-parfor nn=1:Plen
+ parfor nn=1:Plen
     
     dsp     = DSP(ch,Ns_bprop);    
     sig       = Signal(Nsymb,Nt,symbrate);
@@ -133,8 +133,8 @@ sig       = Signal(Nsymb,Nt,symbrate);
 Hf_BER        = transpose(filt(pls,sig.FN));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tic
-parfor nn=1:Plen
+
+ parfor nn=1:Plen
     
     dsp     = DSP(ch,Ns_bprop);
     sig       = Signal(Nsymb,Nt,symbrate);
@@ -184,10 +184,10 @@ parfor nn=1:Plen
     avgber = [ber(patmat_st_rx,patmat_tx) ber(patmat_enh_rx,patmat_tx)];
     
     data(nn,:) = avgber;
-    display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
-             'BER con SSFM = ' , num2str(avgber(1)),char(9)...
-             'BER con ESSFM = ', num2str(avgber(2))            ]);
+%     display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
+%              'BER con SSFM = ' , num2str(avgber(1)),char(9)...
+%              'BER con ESSFM = ', num2str(avgber(2))            ]);
 end
-toc
+
 
 end  
