@@ -10,7 +10,7 @@ etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
 
 NS  = [1,2,4,8,16,25];
-Nc  = [2,4,8];
+Nc  = [8,16,32];
 tic
 parfor  i = 1:length(NS)
         ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
