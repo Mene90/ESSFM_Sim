@@ -1,7 +1,7 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^14];
+symbols      = [2^16];
 
 forward_steps = [10, 10, 50, 50];
 Rs            = [10, 25,100,200];
@@ -20,6 +20,13 @@ N_coefficients{3}  = [2,4,8];
 N_coefficients{4}  = [2,4,8,16];
 
 for k = 1:length(Rs)
+    
+    print = [' '];
+    disp(print)
+    print = ['Symbrate = ',int2str(Rs(k)),' GBd, Forward steps = ',int2str(forward_steps(k))];
+    disp(print);
+    print = [' '];
+    disp(print);
     
     n_prop_steps = forward_steps(k);
     symbrate     = Rs(k);
@@ -49,7 +56,7 @@ for k = 1:length(Rs)
     
     lgn = [];
     
-    colors  = {'-ob';'-og';'-or';'-oc'...
+    colors  = {'-ob';'-og';'-or';'-oc';...
                '-+b';'-+g';'-+r';...
                '-*b';'-*g';'-*r'};
     
