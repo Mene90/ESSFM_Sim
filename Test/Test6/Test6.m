@@ -13,7 +13,7 @@ NS  = [1,2,4,6,8];
 Nc  = [4];
 
 for  k = 1:length(NS)
-    for i = 1:length(Nspan)
+    parfor i = 1:length(Nspan)
         ssfm_max_snr(k,i) = SSFM_MAX_SNR(NS(k),symbols,n_prop_steps,symbrate,etasp,Nspan(i));
     end
     
@@ -22,7 +22,7 @@ for  k = 1:length(NS)
     
     
     
-    for  i = 1:length(Nspan)
+    parfor  i = 1:length(Nspan)
         max_snr(k,i) = ESSFM_MAX_SNR(NS(k),Nc,symbols,n_prop_steps,symbrate,etasp,Nspan(i));
     end
     
