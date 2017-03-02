@@ -1,4 +1,4 @@
-function [ avg_snr ] = BER_ESSFM_XY(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
+function [ avg_snr ] = SNR_XY(Nstep,NC,dBm,sym_length,n_prop_steps,Fn)
 %% Example of FIELD propagation with single polarization
 % This example calculate the ber of the received field after
 % backpropagation. The programm is basically divided in slots. 
@@ -11,9 +11,9 @@ function [ avg_snr ] = BER_ESSFM_XY(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-LL        = 1.2e5;                % length [m]
+LL        = 1e5;                % length [m]
 alphadB   = 0.2;                  % attenuation [dB/km]
-aeff      = 80;                   % effective area [um^2]
+aeff      = 85;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
 lambda    = 1550;                 % wavelength [nm] @ dispersion
 D         = 17;                   % dispersion [ps/nm/km] @ wavelength
@@ -36,7 +36,7 @@ Ns_bprop = Nstep;                  % SSFM and ESSFM backpropagation steps
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-symbrate  = 50;                  % symbol rate [Gbaud]
+symbrate  = 200;                  % symbol rate [Gbaud]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Pulse parameters                               %
@@ -54,7 +54,7 @@ pls.ord     = 0.2;                       % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Gerbio    = alphadB*LL*1e-3;
-% etasp     = 2;
+etasp     = [0.5 .*10.^(Fn/10)];
 
 %% Training phase
 % The parameters for the ESSFM are calculating through a training signal
@@ -162,10 +162,10 @@ for nn=1:Plen
         sig      = ampli.AddNoise(sig);
     end
     
-    sig_st_rx = copy(sig);
+%     sig_st_rx = copy(sig);
     sig_enh_rx = copy(sig);
     for i = 1:Nspan
-        sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
+%         sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
         sig_enh_rx   = dsp.DBP_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
     end
     
@@ -174,19 +174,19 @@ for nn=1:Plen
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     FIELDX_TX       = get(sig       ,'FIELDX_TX');  
-    FIELDX_ST_RX    = get(sig_st_rx ,'FIELDX'   );
+%     FIELDX_ST_RX    = get(sig_st_rx ,'FIELDX'   );
     FIELDX_ENH_RX   = get(sig_enh_rx,'FIELDX'   );
     
-    FIELDX_ST_RX    = ifft(fft(FIELDX_ST_RX).*Hf_BER);
+%     FIELDX_ST_RX    = ifft(fft(FIELDX_ST_RX).*Hf_BER);
     FIELDX_ENH_RX   = ifft(fft(FIELDX_ENH_RX).*Hf_BER);
     
-    rotx_st         = angle(mean(FIELDX_ST_RX .*conj(FIELDX_TX)));
+%     rotx_st         = angle(mean(FIELDX_ST_RX .*conj(FIELDX_TX)));
     rotx_enh        = angle(mean(FIELDX_ENH_RX.*conj(FIELDX_TX)));
     
-    FIELDX_ST_RX    = FIELDX_ST_RX *exp(-1i*rotx_st);
+%     FIELDX_ST_RX    = FIELDX_ST_RX *exp(-1i*rotx_st);
     FIELDX_ENH_RX   = FIELDX_ENH_RX*exp(-1i*rotx_enh);
     
-    patmatx_st_rx    = samp2pat(angle(FIELDX_ST_RX(1:Nt:end)));
+%     patmatx_st_rx    = samp2pat(angle(FIELDX_ST_RX(1:Nt:end)));
     patmatx_enh_rx   = samp2pat(angle(FIELDX_ENH_RX(1:Nt:end)));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -194,19 +194,19 @@ for nn=1:Plen
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     FIELDY_TX       = get(sig       ,'FIELDY_TX');
-    FIELDY_ST_RX    = get(sig_st_rx ,'FIELDY'   );
+%     FIELDY_ST_RX    = get(sig_st_rx ,'FIELDY'   );
     FIELDY_ENH_RX   = get(sig_enh_rx,'FIELDY'   );
     
-    FIELDY_ST_RX    = ifft(fft(FIELDY_ST_RX).*Hf_BER);
+%     FIELDY_ST_RX    = ifft(fft(FIELDY_ST_RX).*Hf_BER);
     FIELDY_ENH_RX   = ifft(fft(FIELDY_ENH_RX).*Hf_BER);    
     
-    roty_st         = angle(mean(FIELDY_ST_RX .*conj(FIELDY_TX)));
+%     roty_st         = angle(mean(FIELDY_ST_RX .*conj(FIELDY_TX)));
     roty_enh        = angle(mean(FIELDY_ENH_RX.*conj(FIELDY_TX))); 
     
-    FIELDY_ST_RX    = FIELDY_ST_RX *exp(-1i*roty_st);
+%     FIELDY_ST_RX    = FIELDY_ST_RX *exp(-1i*roty_st);
     FIELDY_ENH_RX   = FIELDY_ENH_RX*exp(-1i*roty_enh);    
    
-    patmaty_st_rx    = samp2pat(angle(FIELDY_ST_RX(1:Nt:end)));
+%     patmaty_st_rx    = samp2pat(angle(FIELDY_ST_RX(1:Nt:end)));
     patmaty_enh_rx   = samp2pat(angle(FIELDY_ENH_RX(1:Nt:end)));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
