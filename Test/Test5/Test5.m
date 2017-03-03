@@ -2,15 +2,15 @@
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^16];
-n_prop_steps = 10;
+n_prop_steps = 25;
 
-symbrate = 10;
+symbrate = 50;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
 
-NS  = [1,2,4,8,10];
-Nc  = [2,4];
+NS  = [1,2,4,8,10,15,25];
+Nc  = [2,4,8,16,32];
 tic
 parfor  i = 1:length(NS)
         ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
