@@ -54,7 +54,7 @@ for k = 1:length(Rs)
     end
     toc
     
-    fig = figure(j);
+    fig = figure(k);
     
     lgn = [];
     
