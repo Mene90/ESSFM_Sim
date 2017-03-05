@@ -24,6 +24,58 @@ classdef DSP
 
         end
        
+        function sig        = DBP_vec_ssfm_disp_comp(dsp,Pavg,sig)
+        channel = dsp.ch;
+            dz      = dsp.dz;
+            
+            omega = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
+            beta  = 0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6;
+            
+            ux    = get(sig,'FIELDX');
+            uy    = get(sig,'FIELDY');
+                        
+            if abs(channel.alphalin*dz) > 1e-6
+                Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
+            else
+                Leff     = dz;
+            end
+            
+            z    = dsp.dz*(0:dsp.nstep-1);
+            
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
+           
+            halfdz      = dz/2;
+                
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                           HALF DZ GVD                      %
+            %                                DZ SPM                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            [ux,uy] = dsp.vec_lin_step(-beta*halfdz,ux,uy);
+%             [ux,uy] = dsp.vec_nl_step(xi(1),ux,uy);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        
+            for i=2:dsp.nstep
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %                           DZ GVD                       %
+                %                           DZ SPM                       %
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                [ux,uy] = dsp.vec_lin_step(-beta*dz,ux,uy); 
+%                 [ux,uy] = dsp.vec_nl_step(xi(i),ux,uy); 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               
+            end
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                      LAST HALF DZ GVD                      %
+            %                      LAST      DZ SPM                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            [ux,uy] = dsp.vec_lin_step(-beta*halfdz,ux,uy);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            set(sig,'FIELDX',ux);
+            set(sig,'FIELDY',uy);
+        end
         
         function sig        = DBP_scalar_ssfm (dsp,Pavg,sig)
             

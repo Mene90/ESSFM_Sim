@@ -4,7 +4,7 @@
 symbols      = [2^16];
 
 forward_steps = [10, 10, 25, 50,  50];
-Rs            = [10, 25, 50, 100, 200];
+Rs            = [10];%, 25, 50, 100, 200];
 Fn            = [5];
 etasp         = [0.5 .*10.^(Fn/10)];
 Nspan         = 40;
@@ -12,14 +12,14 @@ Nspan         = 40;
 N_steps{1}  = [1,2,4,8,10];
 N_steps{2}  = [1,2,4,8,10];
 N_steps{3}  = [1,2,4,8,10,15,25];
-N_steps{4}  = [1,2,4,8,10,15,25,40,50];
-N_steps{5}  = [1,2,4,8,10,15,25,40,50];
+N_steps{4}  = [1,2,4,8,10,15,25,45,50];
+N_steps{5}  = [1,2,4,8,10,15,25,45,50];
 
-N_coefficients{1}  = [2,4];
-N_coefficients{2}  = [2,4];
-N_coefficients{3}  = [2,4,8,16];
-N_coefficients{4}  = [2,4,8,16];
-N_coefficients{5}  = [2,4,8,16,32];
+N_coefficients{1}  = [1,2,4];
+N_coefficients{2}  = [1,2,4];
+N_coefficients{3}  = [1,2,4,8,16];
+N_coefficients{4}  = [1,2,4,8,16];
+N_coefficients{5}  = [1,2,4,8,16,32];
 
 for k = 1:length(Rs)
     
@@ -36,9 +36,16 @@ for k = 1:length(Rs)
     Nc           = N_coefficients{k};
     
     parfor  i = 1:length(NS)
-        ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
-        
+        disp_comp_max_snr(i) = DISP_COMP_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
     end
+    
+    print = ['DISP NS = [',int2str(NS),'] Max SNR = [',int2str(disp_comp_max_snr),'] dB '];
+    disp(print);
+    
+    parfor  i = 1:length(NS)
+        ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);       
+    end
+    
     print = ['SSFM NS = [',int2str(NS),'] Max SNR = [',int2str(ssfm_max_snr),'] dB '];
     disp(print);
     
@@ -62,13 +69,13 @@ for k = 1:length(Rs)
                '-+b';'-+g';'-+r';...
                '-*b';'-*g';'-*r'};
     
-    lgn     = ({['SSFM']});
+    lgn     = [({['DISP']}) ({['SSFM']})];
     for i = 1:length(Nc)
         tmp(i,:)  = ({['ESSFM Nc = ' int2str(Nc(i))]});
         lgn       = [lgn tmp(i,:)];
     end
     
-    p1 = plot(NS, ssfm_max_snr,'-*k');
+    p1 = plot(NS, disp_comp_max_snr, '-ok', NS, ssfm_max_snr, '-*k');
     hold('on')
     for i= 1:length(Nc)
         p1=plot(NS, max_snr(:,i), colors{i});
