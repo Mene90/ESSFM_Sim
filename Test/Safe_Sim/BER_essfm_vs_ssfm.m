@@ -114,7 +114,7 @@ BER_st=zeros(1,Plen);
 BER_enh=zeros(1,Plen);
 % Copt=zeros(NC,Plen);
 
-parfor nn=1:Plen
+for nn=1:Plen
     
     %Segnale all'uscita della fibra con propagazione "esatta" (SSFM a tanti passi)
     urx=u;
@@ -157,7 +157,7 @@ parfor nn=1:Plen
 end
 
 %% Simulazione per calcolo della BER
-parfor nn=1:Plen    
+for nn=1:Plen    
         
     %Segnale all'uscita della fibra con propagazione "esatta" (SSFM a tanti passi)
     urx=utx;

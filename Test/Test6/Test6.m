@@ -13,15 +13,21 @@ NS  = [1,2,4,6,8];
 Nc  = [4];
 
 for  k = 1:length(NS)
+    
+    parfor  i = 1:length(Nspan)
+        disp_comp_max_snr(k,i) = DISP_COMP_MAX_SNR(NS(k),symbols,n_prop_steps,symbrate,etasp,Nspan);
+    end
+    
+    print = ['DISP NS = [',int2str(NS),'] Max SNR = [',int2str(disp_comp_max_snr),'] dB '];
+    disp(print);
+    
     parfor i = 1:length(Nspan)
         ssfm_max_snr(k,i) = SSFM_MAX_SNR(NS(k),symbols,n_prop_steps,symbrate,etasp,Nspan(i));
     end
-    
+ 
     print = ['SSFM  Nspan = [',int2str(Nspan),'] Max SNR = [',int2str(ssfm_max_snr(k,:)),'] dB NS = ', int2str(NS(k))];
     disp(print);
-    
-    
-    
+      
     parfor  i = 1:length(Nspan)
         max_snr(k,i) = ESSFM_MAX_SNR(NS(k),Nc,symbols,n_prop_steps,symbrate,etasp,Nspan(i));
     end
@@ -37,7 +43,8 @@ lgn = [];
 
 colors  = {'-or' '-+r' '-*r' '-sr' '-dr';...
            '-og' '-+g' '-*g' '-sg' '-dg'};
-
+      
+       
 for i = 1:length(NS)
     tmp(i,:)  = ({['SSFM N_{steps} = ' int2str(NS(i))]});
     lgn       = [lgn tmp(i,:)];
@@ -48,6 +55,11 @@ for i = 1:length(NS)
     lgn       = [lgn tmp(i,:)];
 end
 
+for i = 1:length(NS)
+    tmp(i,:)  = ({['SSFM DISP = ' int2str(NS(i))]});
+    lgn       = [lgn tmp(i,:)];
+end 
+
 
 for i= 1:length(NS)
     p1=plot(Nspan, ssfm_max_snr(i,:), colors{1,i});
@@ -56,6 +68,11 @@ end
 
 for i= 1:length(NS)
     p1=plot(Nspan, max_snr(i,:), colors{2,i});
+    hold('on')
+end
+
+for i= 1:length(NS)
+    p1=plot(Nspan, disp_comp_max_snr(i,:));
     hold('on')
 end
 

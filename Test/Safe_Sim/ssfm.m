@@ -28,7 +28,7 @@ f=1./(N*Tc)*[0:N2,-(N-N2-1):-1];% frequency vector after fft
 % Dispersion vectors
 phi=pi*pi*bt2*dz*f.*f;
 F=exp(-1i*mod(2*phi,2*pi));       % transfer function (GVD) of step dz
-Fh=exp(-1i*mod(phi,2*pi));    % transfer function (GVD) of half step dz/2
+Fh=exp(-1i*mod(phi,2*pi));        % transfer function (GVD) of half step dz/2
 
 % Vector of effective nonlinearity values along z
 if (abs(a*dz)>1e-6)

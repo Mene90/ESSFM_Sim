@@ -6,9 +6,16 @@ function [ f ] = vec_essfm_opt( sig,dsp,C,Nspan,Loss,Hf )
         NT      = get(rx_sig,'NT'       );
         Pavg    = get(rx_sig,'POWER'    );
         
-        for i = 1:Nspan
-            rx_sig = dsp.DBP_vec_essfm(Pavg*Loss,rx_sig,C);
+        if(dsp.nstep>=1)
+            for i = 1:Nspan
+                rx_sig = dsp.DBP_vec_essfm(Pavg*Loss,rx_sig,C);
+            end
+        else
+            for i=1:round(Nspan*dsp.nstep)
+                rx_sig = dsp.DBP_vec_essfm(Pavg*Loss,rx_sig,C);
+            end
         end
+        
         
         ux_out  = get(rx_sig,'FIELDX_TX');
         uy_out  = get(rx_sig,'FIELDY_TX');  
