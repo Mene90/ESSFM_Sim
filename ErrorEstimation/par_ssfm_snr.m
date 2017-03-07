@@ -25,14 +25,8 @@ for i = 1:Nspan
 end
 
 sig_st_rx = copy(sig);
-if(dsp.nstep>01)
-    for i = 1:Nspan
-        sig_st_rx   = dsp.DBP_vec_ssfm(Pavg*Loss,sig_st_rx);
-    end
-else
-    for i = 1:round(Nspan*dsp.nstep)
-        sig_st_rx   = dsp.DBP_vec_ssfm(Pavg*Loss,sig_st_rx);
-    end
+for i = 1:Nspan
+    sig_st_rx   = dsp.DBP_vec_ssfm(Pavg*Loss,sig_st_rx);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

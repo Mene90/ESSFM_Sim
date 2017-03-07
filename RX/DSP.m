@@ -33,26 +33,18 @@ classdef DSP
             
             ux    = get(sig,'FIELDX');
             uy    = get(sig,'FIELDY');
-            if(dsp.nstep>=1)
-                
-                if abs(channel.alphalin*dz) > 1e-6
-                    Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
-                else
-                    Leff     = dz;
-                end
-                
-                z    = dsp.dz*(0:dsp.nstep-1);
-                
-                xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
-                
-                halfdz      = dz/2;
+                        
+            if abs(channel.alphalin*dz) > 1e-6
+                Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
             else
-                
-                halfdz   = dz/2;
-                Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf);
-                xi       = -channel.gamma*Leff*Pavg*dz;
-                
+                Leff     = dz;
             end
+            
+            z    = dsp.dz*(0:dsp.nstep-1);
+            
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
+           
+            halfdz      = dz/2;
                 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                           HALF DZ GVD                      %
@@ -94,28 +86,18 @@ classdef DSP
             beta  = 0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6;
             
             ux    = get(sig,'FIELDX');
-               
-            if(dsp.nstep>=1)
-                
-                if abs(-channel.alphalin*dz) > 1e-6
-                    Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
-                else
-                    Leff     = dz;
-                end
-                
-                z    = dsp.dz*(0:dsp.nstep-1);
-                
-                xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
-                
-                halfdz      = dz/2;
-                
+                       
+            if abs(-channel.alphalin*dz) > 1e-6
+                Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
             else
-                
-                halfdz   = dz/2;
-                Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf);
-                xi       = -channel.gamma*Leff*Pavg*dz;
-                
+                Leff     = dz;
             end
+            
+            z    = dsp.dz*(0:dsp.nstep-1);
+            
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
+           
+            halfdz      = dz/2;
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                         HALF DZ GVD                        %
@@ -148,7 +130,6 @@ classdef DSP
         end
         
         function sig        = DBP_vec_ssfm (dsp,Pavg,sig)
-                            
             channel = dsp.ch;
             dz      = dsp.dz;
             
@@ -157,28 +138,18 @@ classdef DSP
             
             ux    = get(sig,'FIELDX');
             uy    = get(sig,'FIELDY');
-            
-            if(dsp.nstep>=1)
                         
-                if abs(channel.alphalin*dz) > 1e-6
-                    Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
-                else
-                    Leff     = dz;
-                end
-                
-                z    = dsp.dz*(0:dsp.nstep-1);
-                
-                xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
-                
-                halfdz      = dz/2;
-                
+            if abs(channel.alphalin*dz) > 1e-6
+                Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
             else
-                
-                halfdz   = dz/2;
-                Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf);
-                xi       = -channel.gamma*Leff*Pavg*dz;
-            
+                Leff     = dz;
             end
+            
+            z    = dsp.dz*(0:dsp.nstep-1);
+            
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
+           
+            halfdz      = dz/2;
                 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                           HALF DZ GVD                      %
@@ -221,25 +192,17 @@ classdef DSP
      
             ux    = get(sig,'FIELDX');
             
-            if(dsp.nstep>=1)
-                if abs(channel.alphalin*dz) > 1e-6
-                    Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
-                else
-                    Leff     = dz;
-                end
-                
-                z    = dsp.dz*(0:dsp.nstep-1);
-                
-                xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
-                
-                halfdz      = dz/2;
+            if abs(channel.alphalin*dz) > 1e-6
+                Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
             else
-                
-                halfdz   = dz/2;
-                Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf);
-                xi       = -channel.gamma*Leff*Pavg*dz;
-                
+                Leff     = dz;
             end
+            
+            z    = dsp.dz*(0:dsp.nstep-1);
+            
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
+           
+            halfdz      = dz/2;
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                         HALF DZ GVD                        %
@@ -281,27 +244,17 @@ classdef DSP
             ux    = get(sig,'FIELDX');
             uy    = get(sig,'FIELDY');
             
-            if(dsp.nstep>=1)
-                
-                if abs(channel.alphalin*dz) > 1e-6
-                    Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
-                else
-                    Leff     = dz;
-                end
-                
-                z    = dsp.dz*(0:dsp.nstep-1);
-                
-                xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
-                
-                halfdz      = dz/2;
-                
+            if abs(channel.alphalin*dz) > 1e-6
+                Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
             else
-                
-                halfdz   = dz/2;
-                Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf);
-                xi       = -channel.gamma*Leff*Pavg*dz;
-                
+                Leff     = dz;
             end
+            
+            z    = dsp.dz*(0:dsp.nstep-1);
+            
+            xi   = -channel.gamma*Leff*exp(channel.alphalin*z)*Pavg;
+           
+            halfdz      = dz/2;
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                           HALF DZ GVD                      %
