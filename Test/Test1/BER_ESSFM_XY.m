@@ -164,9 +164,16 @@ parfor nn=1:Plen
     
     sig_st_rx = copy(sig);
     sig_enh_rx = copy(sig);
-    for i = 1:Nspan
-        sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
-        sig_enh_rx   = dsp.DBP_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+    if(Nstep>=1)
+        for i = 1:Nspan
+            sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
+            sig_enh_rx   = dsp.DBP_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+        end
+    else
+        for i = 1:round(Nspan*Nstep)
+            sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
+            sig_enh_rx   = dsp.DBP_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+        end
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

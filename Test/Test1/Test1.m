@@ -1,15 +1,15 @@
-
-addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
+addpath('C:\Users\mene9\OneDrive\Uni\Magistrale\Tesi\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
+% addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^12];
+symbols      = [2^16];
 n_prop_steps = 10;
 
-etasp = [5];
+etasp = [6];
 gamma = 1.27e-3;
 
-NS  = [10 10 10];
-Nc  = [ 0 0 0];
+NS  = [0.5];
+Nc  = [ 1];
 dBm = (-3:4);
 
 for k = 1:length(etasp)
