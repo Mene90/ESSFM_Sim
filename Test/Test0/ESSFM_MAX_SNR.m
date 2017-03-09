@@ -1,8 +1,8 @@
-function [ max_snr ] = DISP_COMP_MAX_SNR( Nstep,sym_length,n_prop_steps,R,etasp,Nspan)
+function [ max_snr ] = ESSFM_MAX_SNR( Nstep,NC,sym_length,n_prop_steps,R,etasp,Nspan)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-LL        = 1e5;                % length [m]
+LL        = 1e5;                  % length [m]
 alphadB   = 0.2;                  % attenuation [dB/km]
 aeff      = 85;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
@@ -24,13 +24,18 @@ dsp       = DSP(ch,Ns_bprop);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 symbrate  = R;                  % symbol rate [Gbaud]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                         Signal parameters                              %
+%                      Trainin Signal parameters                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Nsymb     = 2^10;                % number of symbols
+Nt        = 2;                   % points x symbol
+t_sig     = Signal(Nsymb,Nt,symbrate);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                            Signal parameters                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Nsymb     = sym_length;                % number of symbols
 Nt        = 2;                         % points x symbol
 sig       = Signal(Nsymb,Nt,symbrate);
 
-max_snr   = -disp_comp_maxSNR(ch,dsp,sig,etasp,Nspan);
-
+max_snr   = -essfm_maxSNR(ch,dsp,sig,t_sig,NC,etasp,Nspan);
 end
 

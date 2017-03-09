@@ -1,4 +1,4 @@
-function [ max_snr ] = DISP_COMP_MAX_SNR( Nstep,sym_length,n_prop_steps,R,etasp,Nspan)
+function [ max_snr ] = SSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,R,etasp,Nspan)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,7 +30,6 @@ Nsymb     = sym_length;                % number of symbols
 Nt        = 2;                         % points x symbol
 sig       = Signal(Nsymb,Nt,symbrate);
 
-max_snr   = -disp_comp_maxSNR(ch,dsp,sig,etasp,Nspan);
-
+max_snr   = -ssfm_maxSNR(ch,dsp,sig,etasp,Nspan);
 end
 

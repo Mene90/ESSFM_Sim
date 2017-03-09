@@ -1,4 +1,8 @@
-function [ max_snr ] = SSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,R,etasp,Nspan)
+function [ max_snr,P_max ] = SSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,R,etasp,Nspan)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                      Global Signal parameters                          %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+symbrate  = R;                  % symbol rate [Gbaud]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -15,21 +19,62 @@ pmd       = false;                % pmd enable/disable
 
 ch        = Channel(LL,alphadB,lambda,aeff,n2,D,S,Ns_prop,pmd);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                         Amplifier parameters                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Gerbio    = ch.alphalin/(log(10)*1e-4)*ch.Lf*1e-3;
+ampli.G   = Gerbio;
+ampli.e   = etasp;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         DSP parameters                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Ns_bprop  = Nstep;                  % SSFM and ESSFM backpropagation steps
 dsp       = DSP(ch,Ns_bprop);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                      Global Signal parameters                          %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-symbrate  = R;                  % symbol rate [Gbaud]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Signal parameters                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Nsymb     = sym_length;                % number of symbols
 Nt        = 2;                         % points x symbol
 sig       = Signal(Nsymb,Nt,symbrate);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                         Some System Parameters                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+nfft      = sig.NSYMB*sig.NT;
+Loss      = 10^(-Gerbio*0.1);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                         Pulse parameters                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+pls.shape   = 'RRC';
+pls.bw      = 1.0;                       % duty cycle
+pls.ord     = 0.1;                       % pulse roll-off
 
-max_snr   = -ssfm_maxSNR(ch,dsp,sig,etasp,Nspan);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                       SNR Matched filter                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Hf_SNR        = transpose(filt(pls,sig.FN));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%              Modulation of the Signal used for SNR  calc               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[patx_tx(:,1), patmatx_tx]    = Pattern.random(4,sig.NSYMB);
+[paty_tx(:,1), patmaty_tx]    = Pattern.random(4,sig.NSYMB);
+
+E                             = Laser.GetLaserSource(1, nfft);
+
+set(sig,'FIELDX'    ,Modulator.ApplyModulation(E, 2*patmatx_tx-1, sig, pls));
+set(sig,'FIELDX_TX' ,Modulator.ApplyModulation(E, 2*patmatx_tx-1, sig, pls));
+set(sig,'FIELDY'    ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
+set(sig,'FIELDY_TX' ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
+
+system.Nspan     = Nspan;
+system.Loss      = Loss;
+system.mfil_snr  = Hf_SNR;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+options = optimset('Display','off','TolX',3e-1);
+funmax = @(Ps_dBm) -par_ssfm_snr(Ps_dBm,ch,dsp,sig,ampli,system);
+
+[P_max,max_snr] = fminbnd(funmax,-2,10,options);
+max_snr = -max_snr;
 end
 

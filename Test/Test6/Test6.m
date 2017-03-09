@@ -2,7 +2,7 @@
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^16];
-n_prop_steps = 25;
+n_prop_steps = 50;
 
 symbrate = 50;
 Fn       = [5];
@@ -15,7 +15,7 @@ Nc  = [4];
 for  k = 1:length(NS)
     
     parfor  i = 1:length(Nspan)
-        disp_comp_max_snr(k,i) = DISP_COMP_MAX_SNR(NS(k),symbols,n_prop_steps,symbrate,etasp,Nspan);
+        disp_comp_max_snr(k,i) = DISPERSION_COMPENSATION_MAXSNR(NS(k),symbols,n_prop_steps,symbrate,etasp,Nspan);
     end
     
     print = ['DISP NS = [',int2str(NS),'] Max SNR = [',int2str(disp_comp_max_snr),'] dB '];
