@@ -83,6 +83,97 @@ classdef Channel
         end
         
   
+        function ux       = gpu_scalar_ssfm(ch,Pavg,sig,ux)
+            
+            halfdz = ch.dz/2;
+            omega  = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
+            betaz  = gpuArray(complex((0.5*omega.^2*ch.b2 + omega.^3*ch.b3/6)*ch.dz));
+            betahz = gpuArray(complex((0.5*omega.^2*ch.b2 + omega.^3*ch.b3/6)*halfdz));
+            
+            if abs(ch.alphalin*ch.dz) > 1e-6
+                Leff     = (1-exp(-ch.alphalin*ch.dz))/ch.alphalin;
+            else
+                Leff     = ch.dz;
+            end
+            
+            z    = ch.dz*(0:ch.nstep-1);
+            
+            xi   = gpuArray(ch.gamma*Leff*exp(-ch.alphalin*z)*Pavg);
+            
+            
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                           HALF DZ GVD                      %
+            %                                DZ SPM                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+             ux = scalar_lin_step(ch,betahz,ux); 
+             ux = scalar_nl_step(ch,ux,xi(1)); 
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            for i=2:ch.nstep    
+            
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %                           DZ GVD                       %
+                %                           DZ SPM                       %
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                 ux = scalar_lin_step(ch,betaz,ux); 
+                 ux = scalar_nl_step(ch,ux,xi(i)); 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+            end
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                      LAST HALF DZ GVD                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+             ux = scalar_lin_step(ch,betahz,ux);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+        end
+        
+        function [ux, uy] = gpu_vectorial_ssfm(ch,Pavg,sig,ux,uy)
+            halfdz = ch.dz/2;
+            omega = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
+            betaz  = gpuArray(complex((0.5*omega.^2*ch.b2 + omega.^3*ch.b3/6)*ch.dz));
+            betahz = gpuArray(complex((0.5*omega.^2*ch.b2 + omega.^3*ch.b3/6)*halfdz));
+            
+            if abs(ch.alphalin*ch.dz) > 1e-6
+                Leff     = (1-exp(-ch.alphalin*ch.dz))/ch.alphalin;
+            else
+                Leff     = ch.dz;
+            end
+            
+            z    = ch.dz*(0:ch.nstep-1);
+            
+            xi   = gpuArray(ch.gamma*Leff*exp(-ch.alphalin*z)*Pavg);
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                           HALF DZ GVD                      %
+            %                                DZ SPM                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            [ux,uy] = vec_lin_step(ch,betahz,ux,uy); 
+            [ux,uy] = vec_nl_step(ch,xi(1),ux,uy); 
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            for i=2:ch.nstep 
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %                           DZ GVD                       %
+                %                           DZ SPM                       %
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                [ux,uy] = vec_lin_step(ch,betaz,ux,uy); 
+                [ux,uy] = vec_nl_step(ch,xi(i),ux,uy); 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+            end
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                      LAST HALF DZ GVD                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            [ux,uy] = vec_lin_step(ch,betahz,ux,uy);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                       
+        end
+        
         function sig = scalar_ssfm(ch,Pavg,sig)
             
             omega = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
@@ -258,7 +349,7 @@ classdef Channel
         
         function ux         = scalar_nl_step(ch,ux,xi)
                         
-            pow = real(ux).^2 + imag(ux).^2;
+            pow = abs(ux).^2;
             ux  = ux.*exp(-1i*xi*pow);
             
         end
@@ -274,7 +365,7 @@ classdef Channel
         
         function [ux,uy]    = vec_nl_step(ch,xi,ux,uy)
             
-            pow = real(ux).^2 + imag(ux).^2 + real(uy).^2 + imag(uy).^2;
+            pow = abs(ux).^2+abs(uy).^2;
             ux = ux.*exp(-1i*xi.*pow);
             uy = uy.*exp(-1i*xi.*pow);
             

@@ -73,7 +73,7 @@ sig       = Signal(Nsymb,Nt,symbrate);
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Hf       = transpose(filt(pls,sig.FN));
+Hf       = gpuArray(transpose(filt(pls,sig.FN)));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         ESSFM PARAMETERS                               %
@@ -88,12 +88,11 @@ Loss      = 10^(-Gerbio*0.1);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- parfor nn=1:Plen
+for nn=1:Plen
     
     dsp     = DSP(ch,Ns_bprop);    
     sig       = Signal(Nsymb,Nt,symbrate);
-    fmin      = @(C) essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
-    
+        
     ampli                 = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
     [pat{nn}(:,1), patmat]    = Pattern.debruijn(1,4,Nsymb);
@@ -104,19 +103,23 @@ Loss      = 10^(-Gerbio*0.1);
     set(sig,'FIELDX_TX',Modulator.ApplyModulation(E, 2*patmat-1, sig, pls));
     set(sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmat-1, sig, pls));
     
-    for i = 1:Nspan
-        sig      = ampli.AddNoise(sig);
-        sig      = ch.scalar_ssfm(Pavg(nn),sig);
-        
-    end
+    ux = gpuArray(complex(get(sig,'FIELDX')));
     
-    [C(nn,:),err] = lsqnonlin(fmin,C0,[],[],options);
+    for i = 1:Nspan
+        ux      = ampli.gpu_AddNoise(sig,ux);
+        ux      = ch.gpu_scalar_ssfm(Pavg(nn),sig,ux);
+    end
+    fmin      = @(C) gpu_essfm_opt(sig,ux,dsp,C,Nspan,Loss,Hf);
+    [Coeff(nn,:),err] = lsqnonlin(fmin,C0,[],[],options);
 end
 
 %% Transmission Propagation and Reception
 % Propagation and backpropagation of a signal of lenght 2^22 of random 
 % symbols with qpsk modulation. After the propagation the BER is estimated
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           GPU optimization                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C = gpuArray(Coeff);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Signal parameters                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -134,9 +137,9 @@ Hf_BER        = transpose(filt(pls,sig.FN));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- parfor nn=1:Plen
+for nn=1:Plen
     
-    dsp     = DSP(ch,Ns_bprop);
+    dsp       = DSP(ch,Ns_bprop);
     sig       = Signal(Nsymb,Nt,symbrate);
     
     ampli                     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
@@ -149,27 +152,32 @@ Hf_BER        = transpose(filt(pls,sig.FN));
     set(sig,'FIELDX'    ,Modulator.ApplyModulation(E, 2*patmat_tx-1, sig, pls));
     set(sig,'FIELDX_TX' ,Modulator.ApplyModulation(E, 2*patmat_tx-1, sig, pls));
     
+    ux = gpuArray(complex(get(sig,'FIELDX')));
     for i = 1:Nspan
-         sig      = ampli.AddNoise(sig);
-         sig      = ch.scalar_ssfm(Pavg(nn),sig);     
+         ux      = ampli.gpu_AddNoise(sig,ux);
+         ux      = ch.gpu_scalar_ssfm(Pavg(nn),sig,ux);     
     end
-
+    
+    
+    ux_enh = ux;
+    
     sig_st_rx = copy(sig);
     sig_enh_rx = copy(sig);
     
     if (Nstep>=1)
         for i = 1:Nspan
-            sig_st_rx    = dsp.DBP_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx);
-            sig_enh_rx  = dsp.DBP_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+            ux       = dsp.DBP_gpu_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx,ux);
+            ux_enh   = dsp.DBP_gpu_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh);
         end
     else
         for i = 1:round(Nspan*Nstep)
-            sig_st_rx    = dsp.DBP_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx);
-            sig_enh_rx  = dsp.DBP_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+            ux       = dsp.DBP_gpu_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx,ux);
+            ux_enh   = dsp.DBP_gpu_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh);
         end
     end
     
-    
+    set(sig_st_rx, 'FIELDX',gather(ux));
+    set(sig_enh_rx,'FIELDX',gather(ux_enh));
     
     FIELDX_TX       = get(sig,'FIELDX_TX');
     FIELDX_ST_RX    = get(sig_st_rx,'FIELDX');

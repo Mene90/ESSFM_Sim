@@ -22,16 +22,27 @@ ampli     = Ampliflat(Pavg,ch,ampli_par.G,ampli_par.e);
 %                    + SNR ESTIMATION                                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+ux = gpuArray(complex(get(sig,'FIELDX')));
+uy = gpuArray(complex(get(sig,'FIELDY')));
+
 for i = 1:Nspan
-    sig      = ch.vectorial_ssfm(Pavg,sig);
-    sig      = ampli.AddNoise(sig);
+    [ux, uy]      = ampli.gpu_AddNoise(sig,ux,uy);
+    [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg,sig,ux,uy);
 end
 
 sig_st_rx = copy(sig);
-for i = 1:Nspan
-    sig_st_rx   = dsp.DBP_vec_ssfm_disp_comp(Pavg*Loss,sig_st_rx);
+if(dsp.nstep>01)
+    for i = 1:Nspan
+        [ux, uy]   = dsp.DBP_gpu_vec_ssfm_disp_comp(Pavg*Loss,sig_st_rx,ux,uy);
+    end
+else
+    for i = 1:round(Nspan*dsp.nstep)
+        [ux, uy]   = dsp.DBP_gpu_vec_ssfm_disp_comp(Pavg*Loss,sig_st_rx,ux,uy);
+    end
 end
 
+set(sig_st_rx,'FIELDX',gather(ux));
+set(sig_st_rx,'FIELDY',gather(uy));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           X-Pol                                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
