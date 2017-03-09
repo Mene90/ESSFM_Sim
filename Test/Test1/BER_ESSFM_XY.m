@@ -72,7 +72,7 @@ sig       = Signal(Nsymb,Nt,symbrate);
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Hf       = transpose(filt(pls,sig.FN));
+Hf       = gpuArray(transpose(filt(pls,sig.FN)));
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -88,11 +88,11 @@ Loss      = 10^(-Gerbio*0.1);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-parfor nn=1:Plen
+for nn=1:Plen
       
     dsp       = DSP(ch,Ns_bprop);
     sig       = Signal(Nsymb,Nt,symbrate);
-    fmin      = @(C) vec_essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
+    
     
     ampli     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
@@ -107,17 +107,26 @@ parfor nn=1:Plen
     set(sig,'FIELDY_TX',Modulator.ApplyModulation(E, 2*patmaty-1, sig, pls));
     set(sig,'FIELDY'   ,Modulator.ApplyModulation(E, 2*patmaty-1, sig, pls));
     
+    ux = gpuArray(complex(get(sig,'FIELDX')));
+    uy = gpuArray(complex(get(sig,'FIELDY')));
+    
     for i = 1:Nspan
-        sig      = ch.vectorial_ssfm(Pavg(nn),sig);
-        sig      = ampli.AddNoise(sig);
+        [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg(nn),sig,ux,uy);
+        [ux, uy]      = ampli.gpu_AddNoise(sig,ux,uy);
     end
     
-    [C(nn,:),err]=lsqnonlin(fmin,C0,[],[],options);
+     fmin      = @(C) gpu_vec_essfm_opt(sig,ux,uy,dsp,C,Nspan,Loss,Hf);
+
+    [Coeff(nn,:),err]=lsqnonlin(fmin,C0,[],[],options);
 end
+
 %% Transmission Propagation and Reception
 % Propagation and backpropagation of a signal of lenght 2^22 of random 
 % symbols with qpsk modulation. After the propagation the BER is estimated
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           GPU optimization                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C = gpuArray(Coeff);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Trainin Signal parameters                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -136,7 +145,7 @@ Hf_BER        = transpose(filt(pls,sig.FN));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   
-parfor nn=1:Plen
+for nn=1:Plen
  
  
     dsp       = DSP(ch,Ns_bprop);
@@ -156,25 +165,34 @@ parfor nn=1:Plen
     set(sig,'FIELDY_TX' ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
     
     
-    
+    ux = gpuArray(complex(get(sig,'FIELDX')));
+    uy = gpuArray(complex(get(sig,'FIELDY')));
     for i = 1:Nspan
-        sig      = ch.vectorial_ssfm(Pavg(nn),sig);
-        sig      = ampli.AddNoise(sig);
+        [ux, uy]      = ampli.gpu_AddNoise(sig,ux,uy);
+        [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg(nn),sig,ux,uy);
     end
+
+    ux_enh = ux;
+    uy_enh = uy;
     
     sig_st_rx = copy(sig);
     sig_enh_rx = copy(sig);
     if(Nstep>=1)
         for i = 1:Nspan
-            sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
-            sig_enh_rx   = dsp.DBP_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+            [ux, uy]           = dsp.DBP_gpu_vec_ssfm (Pavg(nn)*Loss,sig_st_rx,ux,uy);
+            [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
         end
     else
         for i = 1:round(Nspan*Nstep)
-            sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
-            sig_enh_rx   = dsp.DBP_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+            [ux, uy]           = dsp.DBP_gpu_vec_ssfm (Pavg(nn)*Loss,sig_st_rx,ux,uy);
+            [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
         end
     end
+    
+    set(sig_st_rx,'FIELDX',gather(ux));
+    set(sig_st_rx,'FIELDY',gather(uy));
+    set(sig_enh_rx,'FIELDX',gather(ux_enh));
+    set(sig_enh_rx,'FIELDY',gather(uy_enh));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %                           X-Pol                                    %

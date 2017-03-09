@@ -50,6 +50,22 @@ classdef Ampliflat
             end
         end
         
+        function [ux,uy] = gpu_AddNoise(amp,sig,ux,uy)
+            
+            nfft = sig.NSYMB * sig.NT;
+            
+            Df    = sig.SYMBOLRATE*sig.NT*1e+9;
+            sigma = ones(nfft,1)*sqrt(0.5*amp.N0*Df);
+                        
+            noiseX = sigma.* (randn(nfft,1)+1i*randn(nfft,1));
+            ux = ux + noiseX;
+            
+            if(not(isempty(sig.FIELDY)))
+                noiseY = sigma.* (randn(nfft,1)+1i*randn(nfft,1));
+                uy = uy + noiseY;
+            end
+        end
+        
     end
     
 end

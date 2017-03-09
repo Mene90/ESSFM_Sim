@@ -2,28 +2,20 @@
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^16];
-n_prop_steps = 25;
+n_prop_steps = 400;
 
-symbrate = 50;
+symbrate = 200;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
 
-NS  = [1,2,4,8,10,15,25];
-Nc  = [2,4,8,16,32];
-tic
-parfor  i = 1:length(NS)
-        ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
-        
-end
-print = ['SSFM NS = [',int2str(NS),'] Max SNR = [',int2str(ssfm_max_snr),'] dB '];
-disp(print);
-toc
+NS  = [0.025,0.25,0.5,1,2,4,8,25,50,100];
+Nc  = [1,2,3,5,17,33];
 
 tic
 for  j = 1:length(Nc)
     nc = Nc(j);
-    parfor  i = 1:length(NS)
+    for  i = 1:length(NS)
         max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,symbrate,etasp,Nspan);
     end
     print = ['ESSFM NS = [',int2str(NS),'] Max SNR = [',int2str(max_snr(:,j)'),'] dB ','NC = ',int2str(nc)];
@@ -31,21 +23,39 @@ for  j = 1:length(Nc)
 end
 toc
 
+tic
+for  i = 1:length(NS)
+    disp_comp_max_snr(i) = DISP_COMP_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
+end
+
+print = ['DISP NS = [',int2str(NS),'] Max SNR = [',int2str(disp_comp_max_snr),'] dB '];
+disp(print);
+toc
+
+tic
+for  i = 1:length(NS)
+        ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);        
+end
+print = ['SSFM NS = [',int2str(NS),'] Max SNR = [',int2str(ssfm_max_snr),'] dB '];
+disp(print);
+toc
+
+
 fig = figure(j);
 
 lgn = [];
 
-colors  = {'-ob';'-og';'-or';'-oc';'-om';...
+colors  = {'-ob';'-og';'-or';'-oc';'-om';'-oc';...
            '-+b';'-+g';'-+r';...
            '-*b';'-*g';'-*r'};
        
-lgn     = ({['SSFM']});
+lgn     = [({['DISP']}) ({['SSFM']})]
 for i = 1:length(Nc)
     tmp(i,:)  = ({['ESSFM Nc = ' int2str(Nc(i))]});
     lgn       = [lgn tmp(i,:)];
 end
 
-p1 = plot(NS, ssfm_max_snr,'-*k');
+p1 = plot(NS, disp_comp_max_snr, '-ok', NS, ssfm_max_snr, '-*k');
 hold('on')
 for i= 1:length(Nc)
     p1=plot(NS, max_snr(:,i), colors{i});

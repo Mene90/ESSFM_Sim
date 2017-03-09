@@ -1,12 +1,12 @@
-function [ data ] = BER_ESSFM_XY(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
+function [ data ] = BER_ESSFM_X(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
 %% Example of FIELD propagation with single polarization
 % This example calculate the ber of the received field after
 % backpropagation. The programm is basically divided in slots. 
 % In the first one the the Link, Tx and Rx parameters are seted
 
-
-%% Initialization of channel, trx and rx
-% Description of first code block
+%% Initialization of channel, tx and rx
+% In this first block the link, amplifier, DSP, signal and pulse
+% parameters are initialized  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
@@ -30,18 +30,18 @@ ch        = Channel(LL,alphadB,lambda,aeff,n2,D,S,Ns_prop,pmd);
 %                         DSP parameters                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Ns_bprop = Nstep;                  % SSFM and ESSFM backpropagation steps
+Ns_bprop = Nstep;                   % SSFM and ESSFM backpropagation steps
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-symbrate  = 32;                  % symbol rate [Gbaud]
+symbrate  = 32;                       % symbol rate [Gbaud]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Pulse parameters                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Ps_dBm   = dBm;                    % Power vector            [dBm]
+Ps_dBm   = dBm;                       % Power vector            [dBm]
 Pavg     = 10.^(0.1*(Ps_dBm-30));     % total transmitted power [W]
 Plen     = length(Ps_dBm);
 
@@ -66,6 +66,7 @@ Gerbio    = alphadB*LL*1e-3;
 Nsymb     = 2^10;                % number of symbols
 Nt        = 2;                   % points x symbol
 nfft      = Nsymb * Nt;
+
 sig       = Signal(Nsymb,Nt,symbrate);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -73,7 +74,6 @@ sig       = Signal(Nsymb,Nt,symbrate);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Hf       = transpose(filt(pls,sig.FN));
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         ESSFM PARAMETERS                               %
@@ -88,38 +88,37 @@ Loss      = 10^(-Gerbio*0.1);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-parfor nn=1:Plen
-      
-    dsp       = DSP(ch,Ns_bprop);
+for nn=1:Plen
+    
+    dsp     = DSP(ch,Ns_bprop);    
     sig       = Signal(Nsymb,Nt,symbrate);
-    fmin      = @(C) vec_essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
+    fmin      = @(C) essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
     
-    ampli     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
+    ampli                 = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
-    [patx{nn}(:,1), patmatx]    = Pattern.debruijn(1,4,Nsymb);
-    [paty{nn}(:,1), patmaty]    = Pattern.debruijn(2,4,Nsymb);
+    [pat{nn}(:,1), patmat]    = Pattern.debruijn(1,4,Nsymb);
     
-    E                  = Laser.GetLaserSource(Pavg(nn), nfft);
+    E                     = Laser.GetLaserSource(Pavg(nn), nfft);
     
     set(sig,'POWER'     ,Pavg(nn));
-    set(sig,'FIELDX_TX',Modulator.ApplyModulation(E, 2*patmatx-1, sig, pls));
-    set(sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmatx-1, sig, pls));
-    set(sig,'FIELDY_TX',Modulator.ApplyModulation(E, 2*patmaty-1, sig, pls));
-    set(sig,'FIELDY'   ,Modulator.ApplyModulation(E, 2*patmaty-1, sig, pls));
+    set(sig,'FIELDX_TX',Modulator.ApplyModulation(E, 2*patmat-1, sig, pls));
+    set(sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmat-1, sig, pls));
     
     for i = 1:Nspan
-        sig      = ch.vectorial_ssfm(Pavg(nn),sig);
         sig      = ampli.AddNoise(sig);
+        sig      = ch.scalar_ssfm(Pavg(nn),sig);
+        
     end
     
-    [C(nn,:),err]=lsqnonlin(fmin,C0,[],[],options);
+    [C(nn,:),err] = lsqnonlin(fmin,C0,[],[],options);
 end
+
 %% Transmission Propagation and Reception
 % Propagation and backpropagation of a signal of lenght 2^22 of random 
 % symbols with qpsk modulation. After the propagation the BER is estimated
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                      Trainin Signal parameters                         %
+%                           Signal parameters                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Nsymb     = sym_length;                % number of symbols
 Nt        = 2;                         % points x symbol
@@ -135,95 +134,77 @@ Hf_BER        = transpose(filt(pls,sig.FN));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  
-parfor nn=1:Plen
- 
- 
-    dsp       = DSP(ch,Ns_bprop);
+ for nn=1:Plen
+    
+    dsp     = DSP(ch,Ns_bprop);
     sig       = Signal(Nsymb,Nt,symbrate);
-        
-    ampli                 = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
-    [patx_tx{nn}(:,1), patmatx_tx]    = Pattern.random(4,Nsymb);
-    [paty_tx{nn}(:,1), patmaty_tx]    = Pattern.random(4,Nsymb);
+    ampli                     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
-    E                     = Laser.GetLaserSource(Pavg(nn), nfft);
-        
+    [patx{nn}(:,1), patmat_tx]    = Pattern.random(4,Nsymb);
+    
+    E                         = Laser.GetLaserSource(Pavg(nn), nfft);
+    
     set(sig,'POWER'     ,Pavg(nn));
-    set(sig,'FIELDX'    ,Modulator.ApplyModulation(E, 2*patmatx_tx-1, sig, pls));
-    set(sig,'FIELDX_TX' ,Modulator.ApplyModulation(E, 2*patmatx_tx-1, sig, pls));
-    set(sig,'FIELDY'    ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
-    set(sig,'FIELDY_TX' ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
-    
-    
-    
+    set(sig,'FIELDX'    ,Modulator.ApplyModulation(E, 2*patmat_tx-1, sig, pls));
+    set(sig,'FIELDX_TX' ,Modulator.ApplyModulation(E, 2*patmat_tx-1, sig, pls));
+    tic
     for i = 1:Nspan
-        sig      = ch.vectorial_ssfm(Pavg(nn),sig);
-        sig      = ampli.AddNoise(sig);
+         sig      = ampli.AddNoise(sig);
+         sig      = ch.scalar_ssfm(Pavg(nn),sig);     
     end
+    toc
+    set(sig,'FIELDX'    ,sig.FIELDX_TX);
     
-    sig_st_rx = copy(sig);
+    tic
+    ux = gpuArray(complex(get(sig,'FIELDX')));
+    for i = 1:Nspan
+         ux      = ampli.gpu_AddNoise(sig,ux);
+         ux      = ch.gpu_scalar_ssfm(Pavg(nn),sig,ux);     
+    end
+    set(sig,'FIELDX',gather(ux));
+    toc
+    
+    
+     sig_st_rx = copy(sig);
     sig_enh_rx = copy(sig);
-    if()
-    for i = 1:Nspan
-        sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
-        sig_enh_rx   = dsp.DBP_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+    
+    if (Nstep>=1)
+        for i = 1:Nspan
+            sig_st_rx    = dsp.DBP_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx);
+            sig_enh_rx  = dsp.DBP_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+        end
+    else
+        for i = 1:round(Nspan*Nstep)
+            sig_st_rx    = dsp.DBP_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx);
+            sig_enh_rx  = dsp.DBP_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+        end
     end
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %                           X-Pol                                    %
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    FIELDX_TX       = get(sig       ,'FIELDX_TX');  
-    FIELDX_ST_RX    = get(sig_st_rx ,'FIELDX'   );
-    FIELDX_ENH_RX   = get(sig_enh_rx,'FIELDX'   );
+    
+    FIELDX_TX       = get(sig,'FIELDX_TX');
+    FIELDX_ST_RX    = get(sig_st_rx,'FIELDX');
+    FIELDX_ENH_RX   = get(sig_enh_rx,'FIELDX');
+    
     
     FIELDX_ST_RX    = ifft(fft(FIELDX_ST_RX).*Hf_BER);
     FIELDX_ENH_RX   = ifft(fft(FIELDX_ENH_RX).*Hf_BER);
     
-    rotx_st         = angle(mean(FIELDX_ST_RX .*conj(FIELDX_TX)));
-    rotx_enh        = angle(mean(FIELDX_ENH_RX.*conj(FIELDX_TX)));
+    rot_st          = angle(mean(FIELDX_ST_RX .*conj(FIELDX_TX)));
+    rot_enh         = angle(mean(FIELDX_ENH_RX.*conj(FIELDX_TX)));
+    FIELDX_ST_RX    = FIELDX_ST_RX *exp(-1i*rot_st);
+    FIELDX_ENH_RX   = FIELDX_ENH_RX*exp(-1i*rot_enh);
     
-    FIELDX_ST_RX    = FIELDX_ST_RX *exp(-1i*rotx_st);
-    FIELDX_ENH_RX   = FIELDX_ENH_RX*exp(-1i*rotx_enh);
+    patmat_st_rx    = samp2pat(angle(FIELDX_ST_RX(1:Nt:end)));
+    patmat_enh_rx   = samp2pat(angle(FIELDX_ENH_RX(1:Nt:end)));
     
-    patmatx_st_rx    = samp2pat(angle(FIELDX_ST_RX(1:Nt:end)));
-    patmatx_enh_rx   = samp2pat(angle(FIELDX_ENH_RX(1:Nt:end)));
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %                           Y-Pol                                    %
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    FIELDY_TX       = get(sig       ,'FIELDY_TX');
-    FIELDY_ST_RX    = get(sig_st_rx ,'FIELDY'   );
-    FIELDY_ENH_RX   = get(sig_enh_rx,'FIELDY'   );
-    
-    FIELDY_ST_RX    = ifft(fft(FIELDY_ST_RX).*Hf_BER);
-    FIELDY_ENH_RX   = ifft(fft(FIELDY_ENH_RX).*Hf_BER);    
-    
-    roty_st         = angle(mean(FIELDY_ST_RX .*conj(FIELDY_TX)));
-    roty_enh        = angle(mean(FIELDY_ENH_RX.*conj(FIELDY_TX))); 
-    
-    FIELDY_ST_RX    = FIELDY_ST_RX *exp(-1i*roty_st);
-    FIELDY_ENH_RX   = FIELDY_ENH_RX*exp(-1i*roty_enh);    
-   
-    patmaty_st_rx    = samp2pat(angle(FIELDY_ST_RX(1:Nt:end)));
-    patmaty_enh_rx   = samp2pat(angle(FIELDY_ENH_RX(1:Nt:end)));
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    
-    avgberx = [ber(patmatx_st_rx, patmatx_tx) ber(patmatx_enh_rx,patmatx_tx)];
-    avgbery = [ber(patmaty_st_rx, patmaty_tx) ber(patmaty_enh_rx,patmaty_tx)];
-    
-    avgber = 0.5*(avgberx+avgbery);
+    avgber = [ber(patmat_st_rx,patmat_tx) ber(patmat_enh_rx,patmat_tx)];
     
     data(nn,:) = avgber;
-    
-%     display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
-%              'BER con SSFM = ' , num2str(avgber(1)),char(9)...
-%              'BER con ESSFM = ', num2str(avgber(2))            ]);
-
+    display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
+             'BER con SSFM = ' , num2str(avgber(1)),char(9)...
+             'BER con ESSFM = ', num2str(avgber(2))            ]);
 end
 
 
