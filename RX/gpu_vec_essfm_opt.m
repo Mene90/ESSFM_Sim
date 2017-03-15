@@ -29,17 +29,17 @@ function [ f ] = gpu_vec_essfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf )
         
         ux_rx   = ux_rx(1:NT:end);
         uy_rx   = uy_rx(1:NT:end);
-        ux_out  = ux_out(1:NT:end);
-        uy_out  = uy_out(1:NT:end);
+%         ux_out  = ux_out(1:NT:end);
+%         uy_out  = uy_out(1:NT:end);
         
         rotx    = angle(mean(ux_rx.*conj(ux_out)));
         roty    = angle(mean(uy_rx.*conj(uy_out)));
         
         ux_rx   = ux_rx*exp(-1i*rotx);
-        uy_rx   = uy_rx*exp(-1i*roty);
-        
-        f = [real(ux_rx-ux_out); imag(ux_rx-ux_out);...
-             real(uy_rx-uy_out); imag(uy_rx-uy_out);];
+        uy_rx   = uy_rx*exp(-1i*roty);       
+
+        X = [real(ux_rx-ux_out).'; imag(ux_rx-ux_out).'];
+        Y = [real(uy_rx-uy_out).'; imag(uy_rx-uy_out).'];
    
         return
 

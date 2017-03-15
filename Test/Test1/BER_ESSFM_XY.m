@@ -11,7 +11,7 @@ function [ data ] = BER_ESSFM_XY(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-LL        = 1.2e5;                % length [m]
+LL        = 1e5;                % length [m]
 alphadB   = 0.2;                  % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]

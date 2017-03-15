@@ -268,7 +268,7 @@ classdef DSP
             betaz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*dz));
             betahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*halfdz));
                         
-            if(dsp.nstep>=1)
+            if(dsp.nstep>1)
                 
                 if abs(channel.alphalin*dz) > 1e-6
                     Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
@@ -282,8 +282,8 @@ classdef DSP
                                                 
             else
                
-                Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf);
-                xi       = gpuArray(-channel.gamma*Leff*Pavg*dz);
+                Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
+                xi       = gpuArray(-channel.gamma*Leff*Pavg);
                 
             end
             
@@ -681,7 +681,7 @@ classdef DSP
         function [ux,uy]    = vec_nl_essfm_step(obj,C,ux,uy)
             
             
-            pow = real(ux).^2 + imag(ux).^2 + real(uy).^2 + imag(uy).^2;
+            pow = abs(ux).^2 + abs(uy).^2;
             
             M=length(pow);
             N=length(C);
@@ -693,8 +693,8 @@ classdef DSP
             end
             theta=conv(per_pow,CC,'valid');
             
-            ux = ux.*exp(1i*theta);
-            uy = uy.*exp(1i*theta);
+            ux = ux.*exp(1i*theta*8/9);
+            uy = uy.*exp(1i*theta*8/9);
             
         end
         

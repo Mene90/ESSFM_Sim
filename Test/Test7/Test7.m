@@ -1,7 +1,7 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^16];
+symbols      = [2^12];
 
 forward_steps = [10, 10, 50, 100, 400];
 Rs            = [10, 25, 50, 100, 200];

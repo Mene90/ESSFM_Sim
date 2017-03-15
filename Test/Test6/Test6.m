@@ -1,40 +1,40 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^16];
-n_prop_steps = 50;
+symbols      = [2^12];
+n_prop_steps = 25;
 
 symbrate = 50;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = [10:10:80];
 
-NS  = [1,2,4,6,8];
-Nc  = [4];
+NS  = [1,2,4,5];
+Nc  = [5];
 
 for  k = 1:length(NS)
-    
+    tic
     parfor  i = 1:length(Nspan)
-        disp_comp_max_snr(k,i) = DISPERSION_COMPENSATION_MAXSNR(NS(k),symbols,n_prop_steps,symbrate,etasp,Nspan);
+        disp_comp_max_snr(k,i) = DISPERSION_COMPENSATION_MAXSNR(NS(k)/Nspan(i),symbols,n_prop_steps,symbrate,etasp,Nspan(i));
     end
     
-    print = ['DISP NS = [',int2str(NS),'] Max SNR = [',int2str(disp_comp_max_snr),'] dB '];
+    print = ['DISP NS = [',int2str(Nspan),'] Max SNR = [',int2str(disp_comp_max_snr(k,:)),'] dB '];
     disp(print);
     
     parfor i = 1:length(Nspan)
-        ssfm_max_snr(k,i) = SSFM_MAX_SNR(NS(k),symbols,n_prop_steps,symbrate,etasp,Nspan(i));
+        ssfm_max_snr(k,i) = ESSFM_MAX_SNR(NS(k)/Nspan(i),1,symbols,n_prop_steps,symbrate,etasp,Nspan(i));
     end
  
     print = ['SSFM  Nspan = [',int2str(Nspan),'] Max SNR = [',int2str(ssfm_max_snr(k,:)),'] dB NS = ', int2str(NS(k))];
     disp(print);
       
     parfor  i = 1:length(Nspan)
-        max_snr(k,i) = ESSFM_MAX_SNR(NS(k),Nc,symbols,n_prop_steps,symbrate,etasp,Nspan(i));
+        max_snr(k,i) = ESSFM_MAX_SNR(NS(k)/Nspan(i),Nc,symbols,n_prop_steps,symbrate,etasp,Nspan(i));
     end
     
     print = ['ESSFM Nspan = [',int2str(Nspan),'] Max SNR = [',int2str(max_snr(k,:)),'] dB ','NS = ',int2str(NS(k))];
     disp(print);
-    
+    toc
 end
 
 fig = figure(1);

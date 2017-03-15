@@ -11,7 +11,7 @@ function [ data ] = BER_ESSFM_X(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-LL        = 1.2e5;                % length [m]
+LL        = 1e5;                % length [m]
 alphadB   = 0.2;                  % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
@@ -73,7 +73,7 @@ sig       = Signal(Nsymb,Nt,symbrate);
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Hf       = transpose(filt(pls,sig.FN));
+Hf       = gpuArray(transpose(filt(pls,sig.FN)));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         ESSFM PARAMETERS                               %
@@ -92,8 +92,7 @@ parfor nn=1:Plen
     
     dsp     = DSP(ch,Ns_bprop);    
     sig       = Signal(Nsymb,Nt,symbrate);
-    fmin      = @(C) essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
-    
+        
     ampli                 = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
     [pat{nn}(:,1), patmat]    = Pattern.debruijn(1,4,Nsymb);
@@ -101,22 +100,26 @@ parfor nn=1:Plen
     E                     = Laser.GetLaserSource(Pavg(nn), nfft);
     
     set(sig,'POWER'     ,Pavg(nn));
-    set(sig,'FIELDX_TX',Modulator.ApplyModulation(E, 2*patmat-1, sig, pls));
+    set(sig,'FIELDX_TX',1./sqrt(2.)*((2*patmat(:,1)-1)+1i*(2*patmat(:,2)-1)));
     set(sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmat-1, sig, pls));
     
-    for i = 1:Nspan
-        sig      = ampli.AddNoise(sig);
-        sig      = ch.scalar_ssfm(Pavg(nn),sig);
-        
-    end
+    ux = gpuArray(complex(get(sig,'FIELDX')));
     
-    [C(nn,:),err] = lsqnonlin(fmin,C0,[],[],options);
+    for i = 1:Nspan
+        ux      = ampli.gpu_AddNoise(sig,ux);
+        ux      = ch.gpu_scalar_ssfm(Pavg(nn),sig,ux);
+    end
+    fmin      = @(C) gpu_essfm_opt(sig,ux,dsp,C,Nspan,Loss,Hf);
+    [Coeff(nn,:),err] = lsqnonlin(fmin,C0,[],[],options);
 end
-
+Coeff.'
 %% Transmission Propagation and Reception
 % Propagation and backpropagation of a signal of lenght 2^22 of random 
 % symbols with qpsk modulation. After the propagation the BER is estimated
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           GPU optimization                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C = gpuArray(Coeff);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                           Signal parameters                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,10 +136,10 @@ sig       = Signal(Nsymb,Nt,symbrate);
 Hf_BER        = transpose(filt(pls,sig.FN));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tic
+
 parfor nn=1:Plen
     
-    dsp     = DSP(ch,Ns_bprop);
+    dsp       = DSP(ch,Ns_bprop);
     sig       = Signal(Nsymb,Nt,symbrate);
     
     ampli                     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
@@ -147,23 +150,34 @@ parfor nn=1:Plen
     
     set(sig,'POWER'     ,Pavg(nn));
     set(sig,'FIELDX'    ,Modulator.ApplyModulation(E, 2*patmat_tx-1, sig, pls));
-    set(sig,'FIELDX_TX' ,Modulator.ApplyModulation(E, 2*patmat_tx-1, sig, pls));
+    set(sig,'FIELDX_TX' ,1./sqrt(2.)*((2*patmat_tx(:,1)-1)+1i*(2*patmat_tx(:,2)-1)));
     
+    ux = gpuArray(complex(get(sig,'FIELDX')));
     for i = 1:Nspan
-         sig      = ampli.AddNoise(sig);
-         sig      = ch.scalar_ssfm(Pavg(nn),sig);     
+         ux      = ampli.gpu_AddNoise(sig,ux);
+         ux      = ch.gpu_scalar_ssfm(Pavg(nn),sig,ux);     
     end
-
+    
+    
+    ux_enh = ux;
+    
     sig_st_rx = copy(sig);
-    for i = 1:Nspan
-         sig_st_rx    = dsp.DBP_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx);
-    end
-    
     sig_enh_rx = copy(sig);
-    for i = 1:Nspan
-        sig_enh_rx  = dsp.DBP_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+    
+    if (Nstep>=1)
+        for i = 1:Nspan
+            ux       = dsp.DBP_gpu_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx,ux);
+            ux_enh   = dsp.DBP_gpu_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:).',ux_enh);
+        end
+    else
+        for i = 1:round(Nspan*Nstep)
+            ux       = dsp.DBP_gpu_scalar_ssfm(Pavg(nn)*Loss,sig_st_rx,ux);
+            ux_enh   = dsp.DBP_gpu_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:).',ux_enh);
+        end
     end
     
+    set(sig_st_rx, 'FIELDX',gather(ux));
+    set(sig_enh_rx,'FIELDX',gather(ux_enh));
     
     FIELDX_TX       = get(sig,'FIELDX_TX');
     FIELDX_ST_RX    = get(sig_st_rx,'FIELDX');
@@ -173,8 +187,8 @@ parfor nn=1:Plen
     FIELDX_ST_RX    = ifft(fft(FIELDX_ST_RX).*Hf_BER);
     FIELDX_ENH_RX   = ifft(fft(FIELDX_ENH_RX).*Hf_BER);
     
-    rot_st          = angle(mean(FIELDX_ST_RX .*conj(FIELDX_TX)));
-    rot_enh         = angle(mean(FIELDX_ENH_RX.*conj(FIELDX_TX)));
+    rot_st          = angle(mean(FIELDX_ST_RX(1:Nt:end)  .*conj(FIELDX_TX)));
+    rot_enh         = angle(mean(FIELDX_ENH_RX(1:Nt:end) .*conj(FIELDX_TX)));
     FIELDX_ST_RX    = FIELDX_ST_RX *exp(-1i*rot_st);
     FIELDX_ENH_RX   = FIELDX_ENH_RX*exp(-1i*rot_enh);
     
@@ -184,10 +198,10 @@ parfor nn=1:Plen
     avgber = [ber(patmat_st_rx,patmat_tx) ber(patmat_enh_rx,patmat_tx)];
     
     data(nn,:) = avgber;
-    display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
-             'BER con SSFM = ' , num2str(avgber(1)),char(9)...
-             'BER con ESSFM = ', num2str(avgber(2))            ]);
+%     display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
+%              'BER con SSFM = ' , num2str(avgber(1)),char(9)...
+%              'BER con ESSFM = ', num2str(avgber(2))            ]);
 end
-toc
+
 
 end  

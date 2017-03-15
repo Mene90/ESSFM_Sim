@@ -11,7 +11,7 @@ function [ data ] = BER_ESSFM_XY(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-LL        = 1.2e5;                % length [m]
+LL        = 1e5;                % length [m]
 alphadB   = 0.2;                  % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
@@ -63,7 +63,7 @@ Gerbio    = alphadB*LL*1e-3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Trainin Signal parameters                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Nsymb     = 2^10;                % number of symbols
+Nsymb     = 2^14;                % number of symbols
 Nt        = 2;                   % points x symbol
 nfft      = Nsymb * Nt;
 sig       = Signal(Nsymb,Nt,symbrate);
@@ -72,7 +72,7 @@ sig       = Signal(Nsymb,Nt,symbrate);
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Hf       = transpose(filt(pls,sig.FN));
+Hf       = gpuArray(transpose(filt(pls,sig.FN)));
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -92,32 +92,41 @@ for nn=1:Plen
       
     dsp       = DSP(ch,Ns_bprop);
     sig       = Signal(Nsymb,Nt,symbrate);
-    fmin      = @(C) vec_essfm_opt(sig,dsp,C,Nspan,Loss,Hf);
+    
     
     ampli     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
     [patx{nn}(:,1), patmatx]    = Pattern.debruijn(1,4,Nsymb);
-    [paty{nn}(:,1), patmaty]    = Pattern.debruijn(2,4,Nsymb);
+    [paty{nn}(:,1), patmaty]    = Pattern.debruijn(1,4,Nsymb);
     
     E                  = Laser.GetLaserSource(Pavg(nn), nfft);
     
     set(sig,'POWER'     ,Pavg(nn));
-    set(sig,'FIELDX_TX',Modulator.ApplyModulation(E, 2*patmatx-1, sig, pls));
+    set(sig,'FIELDX_TX',1./sqrt(2.)*((2*patmatx(:,1)-1)+1i*(2.*patmatx(:,2)-1)));
+    set(sig,'FIELDY_TX',1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2.*patmaty(:,2)-1)));
     set(sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmatx-1, sig, pls));
-    set(sig,'FIELDY_TX',Modulator.ApplyModulation(E, 2*patmaty-1, sig, pls));
     set(sig,'FIELDY'   ,Modulator.ApplyModulation(E, 2*patmaty-1, sig, pls));
     
+    ux = gpuArray(complex(get(sig,'FIELDX')));
+    uy = gpuArray(complex(get(sig,'FIELDY')));
+    
     for i = 1:Nspan
-        sig      = ch.vectorial_ssfm(Pavg(nn),sig);
-        sig      = ampli.AddNoise(sig);
+        [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg(nn),sig,ux,uy);
+        [ux, uy]      = ampli.gpu_AddNoise(sig,ux,uy);
     end
     
-    [C(nn,:),err]=lsqnonlin(fmin,C0,[],[],options);
+     fmin      = @(C) gpu_vec_essfm_opt(sig,ux,uy,dsp,C,Nspan,Loss,Hf);
+
+    [Coeff(nn,:),err]=lsqnonlin(fmin,C0,[],[],options);
 end
+Coeff.'
 %% Transmission Propagation and Reception
 % Propagation and backpropagation of a signal of lenght 2^22 of random 
 % symbols with qpsk modulation. After the propagation the BER is estimated
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           GPU optimization                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C = gpuArray(Coeff);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Trainin Signal parameters                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -135,8 +144,8 @@ Hf_BER        = transpose(filt(pls,sig.FN));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-tic  
-parfor nn=1:Plen
+  
+for nn=1:Plen
  
  
     dsp       = DSP(ch,Ns_bprop);
@@ -150,43 +159,61 @@ parfor nn=1:Plen
     E                     = Laser.GetLaserSource(Pavg(nn), nfft);
         
     set(sig,'POWER'     ,Pavg(nn));
+    set(sig,'FIELDX_TX' ,1./sqrt(2.)*((2*patmatx_tx(:,1)-1)+1i*(2.*patmatx_tx(:,2)-1)));
+    set(sig,'FIELDY_TX' ,1./sqrt(2.)*((2*patmaty_tx(:,1)-1)+1i*(2.*patmaty_tx(:,2)-1)));    
     set(sig,'FIELDX'    ,Modulator.ApplyModulation(E, 2*patmatx_tx-1, sig, pls));
-    set(sig,'FIELDX_TX' ,Modulator.ApplyModulation(E, 2*patmatx_tx-1, sig, pls));
     set(sig,'FIELDY'    ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
-    set(sig,'FIELDY_TX' ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
     
     
     
+    
+    ux = gpuArray(complex(get(sig,'FIELDX')));
+    uy = gpuArray(complex(get(sig,'FIELDY')));
     for i = 1:Nspan
-        sig      = ch.vectorial_ssfm(Pavg(nn),sig);
-        sig      = ampli.AddNoise(sig);
+        [ux, uy]      = ampli.gpu_AddNoise(sig,ux,uy);
+        [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg(nn),sig,ux,uy);
     end
+
+    ux_enh = ux;
+    uy_enh = uy;
     
     sig_st_rx = copy(sig);
     sig_enh_rx = copy(sig);
-    for i = 1:Nspan
-        sig_st_rx    = dsp.DBP_vec_ssfm (Pavg(nn)*Loss,sig_st_rx);
-        sig_enh_rx   = dsp.DBP_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)');
+    if(Nstep>=1)
+        for i = 1:Nspan
+%             [ux, uy]           = dsp.DBP_gpu_vec_ssfm (Pavg(nn)*Loss,sig_st_rx,ux,uy);
+            [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
+        end
+    else
+        for i = 1:round(Nspan*Nstep)
+%             [ux, uy]           = dsp.DBP_gpu_vec_ssfm (Pavg(nn)*Loss,sig_st_rx,ux,uy);
+            [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
+        end
     end
+    
+    set(sig_st_rx,'FIELDX',gather(ux));
+    set(sig_st_rx,'FIELDY',gather(uy));
+    set(sig_enh_rx,'FIELDX',gather(ux_enh));
+    set(sig_enh_rx,'FIELDY',gather(uy_enh));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %                           X-Pol                                    %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     FIELDX_TX       = get(sig       ,'FIELDX_TX');  
-    FIELDX_ST_RX    = get(sig_st_rx ,'FIELDX'   );
+%     FIELDX_ST_RX    = get(sig_st_rx ,'FIELDX'   );
     FIELDX_ENH_RX   = get(sig_enh_rx,'FIELDX'   );
     
-    FIELDX_ST_RX    = ifft(fft(FIELDX_ST_RX).*Hf_BER);
+%     FIELDX_ST_RX    = ifft(fft(FIELDX_ST_RX).*Hf_BER);
     FIELDX_ENH_RX   = ifft(fft(FIELDX_ENH_RX).*Hf_BER);
     
-    rotx_st         = angle(mean(FIELDX_ST_RX .*conj(FIELDX_TX)));
-    rotx_enh        = angle(mean(FIELDX_ENH_RX.*conj(FIELDX_TX)));
+%     rotx_st         = angle(mean(FIELDX_ST_RX .*conj(FIELDX_TX)));
+    rotx_enh        = angle(mean(FIELDX_ENH_RX(1:Nt:end).*conj(FIELDX_TX)));
     
-    FIELDX_ST_RX    = FIELDX_ST_RX *exp(-1i*rotx_st);
+%     FIELDX_ST_RX    = FIELDX_ST_RX *exp(-1i*rotx_st);
     FIELDX_ENH_RX   = FIELDX_ENH_RX*exp(-1i*rotx_enh);
     
-    patmatx_st_rx    = samp2pat(angle(FIELDX_ST_RX(1:Nt:end)));
+%     patmatx_st_rx    = samp2pat(angle(FIELDX_ST_RX(1:Nt:end)));
     patmatx_enh_rx   = samp2pat(angle(FIELDX_ENH_RX(1:Nt:end)));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -194,36 +221,36 @@ parfor nn=1:Plen
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     FIELDY_TX       = get(sig       ,'FIELDY_TX');
-    FIELDY_ST_RX    = get(sig_st_rx ,'FIELDY'   );
+%     FIELDY_ST_RX    = get(sig_st_rx ,'FIELDY'   );
     FIELDY_ENH_RX   = get(sig_enh_rx,'FIELDY'   );
     
-    FIELDY_ST_RX    = ifft(fft(FIELDY_ST_RX).*Hf_BER);
+%     FIELDY_ST_RX    = ifft(fft(FIELDY_ST_RX).*Hf_BER);
     FIELDY_ENH_RX   = ifft(fft(FIELDY_ENH_RX).*Hf_BER);    
     
-    roty_st         = angle(mean(FIELDY_ST_RX .*conj(FIELDY_TX)));
-    roty_enh        = angle(mean(FIELDY_ENH_RX.*conj(FIELDY_TX))); 
+%     roty_st         = angle(mean(FIELDY_ST_RX .*conj(FIELDY_TX)));
+    roty_enh        = angle(mean(FIELDY_ENH_RX(1:Nt:end).*conj(FIELDY_TX))); 
     
-    FIELDY_ST_RX    = FIELDY_ST_RX *exp(-1i*roty_st);
+%     FIELDY_ST_RX    = FIELDY_ST_RX *exp(-1i*roty_st);
     FIELDY_ENH_RX   = FIELDY_ENH_RX*exp(-1i*roty_enh);    
    
-    patmaty_st_rx    = samp2pat(angle(FIELDY_ST_RX(1:Nt:end)));
+%     patmaty_st_rx    = samp2pat(angle(FIELDY_ST_RX(1:Nt:end)));
     patmaty_enh_rx   = samp2pat(angle(FIELDY_ENH_RX(1:Nt:end)));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     
-    avgberx = [ber(patmatx_st_rx, patmatx_tx) ber(patmatx_enh_rx,patmatx_tx)];
-    avgbery = [ber(patmaty_st_rx, patmaty_tx) ber(patmaty_enh_rx,patmaty_tx)];
+    avgberx = [ber(patmatx_enh_rx, patmatx_tx) ber(patmatx_enh_rx,patmatx_tx)];
+    avgbery = [ber(patmaty_enh_rx, patmaty_tx) ber(patmaty_enh_rx,patmaty_tx)];
     
     avgber = 0.5*(avgberx+avgbery);
     
     data(nn,:) = avgber;
     
-    display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
-             'BER con SSFM = ' , num2str(avgber(1)),char(9)...
-             'BER con ESSFM = ', num2str(avgber(2))            ]);
+%     display(['Power[dBm] = '   , num2str(dBm(nn))  ,char(9)...
+%              'BER con SSFM = ' , num2str(avgber(1)),char(9)...
+%              'BER con ESSFM = ', num2str(avgber(2))            ]);
 
 end
-toc  
+
 
 end  

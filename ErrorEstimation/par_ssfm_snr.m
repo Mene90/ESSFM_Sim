@@ -28,7 +28,7 @@ for i = 1:Nspan
 end
 
 sig_st_rx = copy(sig);
-if(dsp.nstep>01)
+if(dsp.nstep>=1)
     for i = 1:Nspan
         [ux, uy]   = dsp.DBP_gpu_vec_ssfm(Pavg*Loss,sig_st_rx,ux,uy);
     end

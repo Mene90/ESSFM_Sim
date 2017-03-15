@@ -1,4 +1,4 @@
-function [ max_snr,P_max ] = ESSFM_MAX_SNR( Nstep,NC,sym_length,n_prop_steps,R,etasp,Nspan)
+function [ max_snr,P_max ] = ESSFM_MAX_SNR( Nstep,NC,sym_length,n_prop_steps,etasp,R,Nspan)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -66,15 +66,16 @@ Hf          = transpose(filt(pls,t_sig.FN));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Training Signal Modulation                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-[patx(:,1), patmatx]    = Pattern.debruijn(1,4,t_sig.NSYMB);
-[paty(:,1), patmaty]    = Pattern.debruijn(2,4,t_sig.NSYMB);
+seedx = 1;
+seedy = t_sig.NSYMB/2^3;
+[patx(:,1), patmatx]    = Pattern.debruijn(seedx,4,t_sig.NSYMB);
+[paty(:,1), patmaty]    = Pattern.debruijn(seedy,4,t_sig.NSYMB);
 
 E                       = Laser.GetLaserSource(1, t_nfft);
 
-set(t_sig,'FIELDX_TX',Modulator.ApplyModulation(E, 2*patmatx-1, t_sig, pls));
+set(t_sig,'FIELDX_TX',1./sqrt(2.)*((2*patmatx(:,1)-1)+1i*(2.*patmatx(:,2)-1)));
 set(t_sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmatx-1, t_sig, pls));
-set(t_sig,'FIELDY_TX',Modulator.ApplyModulation(E, 2*patmaty-1, t_sig, pls));
+set(t_sig,'FIELDY_TX',1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2.*patmaty(:,2)-1)));
 set(t_sig,'FIELDY'   ,Modulator.ApplyModulation(E, 2*patmaty-1, t_sig, pls));
 
 essfm.NC     = NC;
@@ -94,9 +95,9 @@ Hf_SNR        = transpose(filt(pls,sig.FN));
 E                             = Laser.GetLaserSource(1, nfft);
 
 set(sig,'FIELDX'    ,Modulator.ApplyModulation(E, 2*patmatx_tx-1, sig, pls));
-set(sig,'FIELDX_TX' ,Modulator.ApplyModulation(E, 2*patmatx_tx-1, sig, pls));
+set(sig,'FIELDX_TX' ,1./sqrt(2.)*((2*patmatx_tx(:,1)-1)+1i*(2.*patmatx_tx(:,2)-1)));
 set(sig,'FIELDY'    ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
-set(sig,'FIELDY_TX' ,Modulator.ApplyModulation(E, 2*patmaty_tx-1, sig, pls));
+set(sig,'FIELDY_TX' ,1./sqrt(2.)*((2*patmaty_tx(:,1)-1)+1i*(2.*patmaty_tx(:,2)-1)));
 
 system.Nspan     = Nspan;
 system.Loss      = Loss;

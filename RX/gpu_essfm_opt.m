@@ -23,12 +23,12 @@ function [ f ] = gpu_essfm_opt( sig,ux,dsp,C,Nspan,Loss,Hf )
         ux_rx   = gather(ux);
         
         ux_rx   = ux_rx(1:NT:end);
-        ux_out  = ux_out(1:NT:end);
+%         ux_out  = ux_out(1:NT:end);
         
         rot=angle(mean(ux_rx.*conj(ux_out)));
         ux_rx=ux_rx*exp(-1i*rot);
         
-        f = [real(ux_rx-ux_out); imag(ux_rx-ux_out);];
+        f = [real(ux_rx-ux_out).'; imag(ux_rx-ux_out).'];
         
         return
 

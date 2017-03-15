@@ -2,43 +2,41 @@
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^16];
-n_prop_steps = 400;
+n_prop_steps = 100;
 
-symbrate = 200;
+symbrate = 50;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
+% gamma    = 1.27e-3;
 
-NS  = [0.025,0.25,0.5,1,2,4,8,25,50,100];
-Nc  = [1,2,3,5,17,33];
+NS  = [1,2,4,5,8,10,20,40,80,120,160]./Nspan;
+Nc  = [1,5,7,9];
 
 tic
 for  j = 1:length(Nc)
     nc = Nc(j);
-    for  i = 1:length(NS)
-        max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,symbrate,etasp,Nspan);
+    parfor  i = 1:length(NS)
+        max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,etasp,symbrate,Nspan);
     end
-    print = ['ESSFM NS = [',int2str(NS),'] Max SNR = [',int2str(max_snr(:,j)'),'] dB ','NC = ',int2str(nc)];
+    print = ['ESSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',num2str(max_snr(:,j)'),'] dB ','NC = ',int2str(nc-1)];
     disp(print);
 end
 toc
 
 tic
-for  i = 1:length(NS)
-    disp_comp_max_snr(i) = DISPERSION_COMPENSATION_MAXSNRnmj(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
-end
-
-print = ['DISP NS = [',int2str(NS),'] Max SNR = [',int2str(disp_comp_max_snr),'] dB '];
+disp_comp_max_snr = ones(1,length(NS))*DISPERSION_COMPENSATION_MAXSNR(1,symbols,n_prop_steps,symbrate,etasp,Nspan);
+print = ['DISP NS = [',int2str(NS.*Nspan),'] Max SNR = [',int2str(disp_comp_max_snr),'] dB '];
 disp(print);
 toc
 
-tic
-for  i = 1:length(NS)
-        ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);        
-end
-print = ['SSFM NS = [',int2str(NS),'] Max SNR = [',int2str(ssfm_max_snr),'] dB '];
-disp(print);
-toc
+% tic
+% parfor  i = 1:length(NS)
+%         ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);        
+% end
+% print = ['SSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',int2str(ssfm_max_snr),'] dB '];
+% disp(print);
+% toc
 
 
 fig = figure(j);
@@ -49,16 +47,17 @@ colors  = {'-ob';'-og';'-or';'-oc';'-om';'-oc';...
            '-+b';'-+g';'-+r';...
            '-*b';'-*g';'-*r'};
        
-lgn     = [({['DISP']}) ({['SSFM']})]
-for i = 1:length(Nc)
-    tmp(i,:)  = ({['ESSFM Nc = ' int2str(Nc(i))]});
+
+lgn     = [({['Disp. Comp.']})];
+for i = 1:length (Nc)
+    tmp(i,:)  = ({['ESSFM Nc = ' int2str(Nc(i)-1)]});
     lgn       = [lgn tmp(i,:)];
 end
 
-p1 = plot(NS, disp_comp_max_snr, '-ok', NS, ssfm_max_snr, '-*k');
+p1 = plot(NS.*Nspan, disp_comp_max_snr, '--k');
 hold('on')
 for i= 1:length(Nc)
-    p1=plot(NS, max_snr(:,i), colors{i});
+    p1=plot(NS.*Nspan, max_snr(:,i), colors{i});
     hold('on')
 end
 t = strcat('SSFM vs ESSFM N_{step} =',{' '},int2str(n_prop_steps),{' '},...
@@ -75,7 +74,7 @@ xlabel('n° steps');
 
 legend(lgn)
 
-savefig(fig,strcat('plot/S_vs_E_', int2str(n_prop_steps),'_',int2str(symbrate),'_',int2str(log2(symbols)),'.fig'))
+savefig(fig,strcat('plot/ESSFM_', int2str(n_prop_steps),'_',int2str(symbrate),'_',int2str(log2(symbols)),'.fig'))
 
 hold('off')
 close(fig);

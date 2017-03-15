@@ -1,24 +1,26 @@
 
-addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
+% addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^16 2^18 2^20];
-n_prop_steps = 100;
+symbols      = [2^16];
+n_prop_steps = 10;
 
-etasp = 4;
-gamma = 1.27e-3;
+Fn       = [9];
+etasp    = [0.5 .*10.^(Fn/10)];
+gamma = 1.2e-3;
 
-NS  = [1 8 12];
-Nc  = [8 6  2];
-dBm = (-3:4);
+NS  = [0.025,0.125,0.5];
+Nc  = [1  1 1];
+dBm = (-2:6);
 
 for j = 1:length(symbols)
+    
     for i = 1:length(NS)
         
-        data_1{i} = BER_ESSFM_XY(NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp);
+        data_1{i} = BER_ESSFM_XY(NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp);             
+        data_3{i} = BER_essfm_vs_ssfm (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp,gamma);       
         data_2{i} = BER_ESSFM_X (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp);
-        data_3{i} = BER_essfm_vs_ssfm (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp,gamma);
-        
+               
         BER{i}    = [data_1{i} data_2{i} data_3{i}];
         
     end
@@ -30,21 +32,23 @@ for j = 1:length(symbols)
         '-+b';'-+g';'-+r';...
         '-*b';'-*g';'-*r'};
     
-    legends = { strcat('ESSFM_{XY}   Ns =',{' '}, int2str(NS(1)),{' '},'Nc =',{' '}, int2str(Nc(1)));...
-        strcat('ESSFM_X_1            Ns =',{' '}, int2str(NS(1)),{' '},'Nc =',{' '}, int2str(Nc(1)));...
-        strcat('Safe_ESSFM_X_2       Ns =',{' '}, int2str(NS(1)),{' '},'Nc =',{' '}, int2str(Nc(1)));...
-        strcat('ESSFM_{XY}           Ns =',{' '}, int2str(NS(2)),{' '},'Nc =',{' '}, int2str(Nc(2)));...
-        strcat('ESSFM_X_1            Ns =',{' '}, int2str(NS(2)),{' '},'Nc =',{' '}, int2str(Nc(2)));...
-        strcat('Safe_ESSFM_X_2       Ns =',{' '}, int2str(NS(2)),{' '},'Nc =',{' '}, int2str(Nc(2)));...
-        strcat('ESSFM_{XY}           Ns =',{' '}, int2str(NS(3)),{' '},'Nc =',{' '}, int2str(Nc(3)));...
-        strcat('ESSFM_X_1            Ns =',{' '}, int2str(NS(3)),{' '},'Nc =',{' '}, int2str(Nc(3)));...
-        strcat('Safe_ESSFM_X_2       Ns =',{' '}, int2str(NS(3)),{' '},'Nc =',{' '}, int2str(Nc(3)))};
+    legends = { strcat('ESSFM_{XY}   Ns =',{' '}, int2str(NS(1)*40),{' '},'Nc =',{' '}, int2str(Nc(1)-1));...
+        strcat('ESSFM_X_1            Ns =',{' '}, int2str(NS(1)*40),{' '},'Nc =',{' '}, int2str(Nc(1)-1));...
+        strcat('Safe_ESSFM_X         Ns =',{' '}, int2str(NS(1)*40),{' '},'Nc =',{' '}, int2str(Nc(1)-1));...
+        strcat('ESSFM_{XY}           Ns =',{' '}, int2str(NS(2)*40),{' '},'Nc =',{' '}, int2str(Nc(2)-1));...
+        strcat('ESSFM_X_1            Ns =',{' '}, int2str(NS(2)*40),{' '},'Nc =',{' '}, int2str(Nc(2)-1));...
+        strcat('Safe_ESSFM_X         Ns =',{' '}, int2str(NS(2)*40),{' '},'Nc =',{' '}, int2str(Nc(2)-1));...
+        strcat('ESSFM_{XY}           Ns =',{' '}, int2str(NS(3)*40),{' '},'Nc =',{' '}, int2str(Nc(3)-1));...
+        strcat('ESSFM_X_1            Ns =',{' '}, int2str(NS(3)*40),{' '},'Nc =',{' '}, int2str(Nc(3)-1));...
+        strcat('Safe_ESSFM_X         Ns =',{' '}, int2str(NS(3)*40),{' '},'Nc =',{' '}, int2str(Nc(3)-1))};
     
     
     for i= 1:length(NS)
         semilogy(   dBm , BER{i}(:,2), colors{i}  ,...
             dBm , BER{i}(:,4), colors{i+3},...
             dBm , BER{i}(:,6), colors{i+6});
+            
+            
         hold('on')
     end
     

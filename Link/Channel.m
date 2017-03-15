@@ -137,14 +137,14 @@ classdef Channel
             betahz = gpuArray(complex((0.5*omega.^2*ch.b2 + omega.^3*ch.b3/6)*halfdz));
             
             if abs(ch.alphalin*ch.dz) > 1e-6
-                Leff     = (1-exp(-ch.alphalin*ch.dz))/ch.alphalin;
+                geff     = ch.gamma*Pavg*(1-exp(-ch.alphalin*ch.dz))/ch.alphalin;
             else
-                Leff     = ch.dz;
+                geff     = ch.gamma*Pavg*ch.dz;
             end
             
             z    = ch.dz*(0:ch.nstep-1);
             
-            xi   = gpuArray(ch.gamma*Leff*exp(-ch.alphalin*z)*Pavg);
+            xi   = gpuArray(geff*exp(-ch.alphalin*z));
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                           HALF DZ GVD                      %
@@ -366,8 +366,8 @@ classdef Channel
         function [ux,uy]    = vec_nl_step(ch,xi,ux,uy)
             
             pow = abs(ux).^2+abs(uy).^2;
-            ux = ux.*exp(-1i*xi.*pow);
-            uy = uy.*exp(-1i*xi.*pow);
+            ux = ux.*exp(-1i*xi.*pow*8/9);
+            uy = uy.*exp(-1i*xi.*pow*8/9);
             
         end
         

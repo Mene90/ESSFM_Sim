@@ -2,14 +2,14 @@ addpath('C:\Users\mene9\OneDrive\Uni\Magistrale\Tesi\MATLAB\ESSFM_Sim\Test\Safe_
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^10];
+symbols      = [2^14];
 n_prop_steps = 25;
 
-etasp = [4];
+etasp = [10];
 gamma = 1.27e-3;
 
-NS  = [1];
-Nc  = [ 2];
+NS  = [0.5 1];
+Nc  = [1 1];
 dBm = (-1:8);
 
 for k = 1:length(etasp)
@@ -41,9 +41,9 @@ for k = 1:length(etasp)
         lgn = [];
         for i = 1:length(NS)
             
-            tmp(i,:)  = ({['ESSFM_{XY}           Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i))],...
-                ['ESSFM_X            Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i))],...
-                ['Safe ESSFM_X       Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i))]});
+            tmp(i,:)  = ({['ESSFM_{XY}           Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i)-1)],...
+                ['ESSFM_X            Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i)-1)],...
+                ['Safe ESSFM_X       Ns = ' int2str(NS(i)) ' Nc = ' int2str(Nc(i)-1)]});
             
             lgn           = [lgn tmp(i,:)];
             

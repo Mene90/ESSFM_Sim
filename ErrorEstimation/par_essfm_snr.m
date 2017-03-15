@@ -30,8 +30,8 @@ C0(1,1)   = 1;
     uy = gpuArray(complex(get(t_sig,'FIELDY')));
     
     for i = 1:Nspan
-        [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg,t_sig,ux,uy);
         [ux, uy]      = ampli.gpu_AddNoise(t_sig,ux,uy);
+        [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg,t_sig,ux,uy);
     end
     
     fmin      = @(C) gpu_vec_essfm_opt(t_sig,ux,uy,dsp,C,Nspan,Loss,Hf);
@@ -46,14 +46,14 @@ C0(1,1)   = 1;
 ux = gpuArray(complex(get(sig,'FIELDX')));
 uy = gpuArray(complex(get(sig,'FIELDY')));
 for i = 1:Nspan
-    [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg,sig,ux,uy);
     [ux, uy]      = ampli.gpu_AddNoise(sig,ux,uy);
+    [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg,sig,ux,uy);
 end
 ux_enh = ux;
 uy_enh = uy;
 sig_enh_rx = copy(sig);
 
-if(dsp.nstep>01)
+if(dsp.nstep>=1)
     for i = 1:Nspan
        [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh);
     end
@@ -75,7 +75,7 @@ FIELDX_ENH_RX   = get(sig_enh_rx,'FIELDX'   );
 
 FIELDX_ENH_RX   = ifft(fft(FIELDX_ENH_RX).*Hf_SNR);
 
-rotx_enh        = angle(mean(FIELDX_ENH_RX.*conj(FIELDX_TX)));
+rotx_enh        = angle(mean(FIELDX_ENH_RX(1:sig.NT:end).*conj(FIELDX_TX)));
 
 FIELDX_ENH_RX   = FIELDX_ENH_RX*exp(-1i*rotx_enh);
 
@@ -88,14 +88,14 @@ FIELDY_ENH_RX   = get(sig_enh_rx,'FIELDY'   );
 
 FIELDY_ENH_RX   = ifft(fft(FIELDY_ENH_RX).*Hf_SNR);
 
-roty_enh        = angle(mean(FIELDY_ENH_RX.*conj(FIELDY_TX)));
+roty_enh        = angle(mean(FIELDY_ENH_RX(1:sig.NT:end).*conj(FIELDY_TX)));
 
 FIELDY_ENH_RX   = FIELDY_ENH_RX*exp(-1i*roty_enh);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-snr_x = SNR(FIELDX_ENH_RX(1:sig.NT:end),FIELDX_TX(1:sig.NT:end));
-snr_y = SNR(FIELDY_ENH_RX(1:sig.NT:end),FIELDY_TX(1:sig.NT:end));
+snr_x = SNR(FIELDX_ENH_RX(1:sig.NT:end),FIELDX_TX);
+snr_y = SNR(FIELDY_ENH_RX(1:sig.NT:end),FIELDY_TX);
 
 avg_snr = 10*log10(0.5*(snr_x+snr_y));
 
