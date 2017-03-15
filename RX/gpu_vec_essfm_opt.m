@@ -40,6 +40,7 @@ function [ f ] = gpu_vec_essfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf )
 
         X = [real(ux_rx-ux_out).'; imag(ux_rx-ux_out).'];
         Y = [real(uy_rx-uy_out).'; imag(uy_rx-uy_out).'];
+        f = [X;Y];
    
         return
 
