@@ -1,17 +1,17 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^18];
-n_prop_steps = 100;
+symbols      = [2^14];
+n_prop_steps = 10;
 
-symbrate = 50;
+symbrate = 32;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
 % gamma    = 1.27e-3;
 
-NS  = [1,2,4,5,10,20,40,80,120,160]./Nspan;
-Nc  = [1,5,7,9];
+NS  = [1,2,4,5,10,20,40,80]./Nspan;
+Nc  = [1,5];
 
 tic
 for  j = 1:length(Nc)
@@ -48,7 +48,7 @@ colors  = {'-ob';'-og';'-or';'-oc';'-om';'-oc';...
            '-*b';'-*g';'-*r'};
        
 
-lgn     = [({['Disp. Comp.']})];
+% lgn     = [({['Disp. Comp.']})];
 for i = 1:length (Nc)
     tmp(i,:)  = ({['ESSFM Nc = ' int2str(Nc(i)-1)]});
     lgn       = [lgn tmp(i,:)];
