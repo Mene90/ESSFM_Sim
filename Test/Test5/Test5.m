@@ -1,17 +1,17 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^14];
-n_prop_steps = 10;
+symbols      = [2^18];
+n_prop_steps = 100;
 
-symbrate = 32;
+symbrate = 50;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
 % gamma    = 1.27e-3;
 
-NS  = [1,2,4,5,10,20,40,80]./Nspan;
-Nc  = [1,5];
+NS  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+Nc  = [1,3,5,7];
 
 tic
 for  j = 1:length(Nc)
@@ -48,7 +48,7 @@ colors  = {'-ob';'-og';'-or';'-oc';'-om';'-oc';...
            '-*b';'-*g';'-*r'};
        
 
-% lgn     = [({['Disp. Comp.']})];
+lgn     = [({['Disp. Comp.']})];
 for i = 1:length (Nc)
     tmp(i,:)  = ({['ESSFM Nc = ' int2str(Nc(i)-1)]});
     lgn       = [lgn tmp(i,:)];
@@ -57,7 +57,7 @@ end
 p1 = plot(NS.*Nspan, disp_comp_max_snr, '--k');
 hold('on')
 for i= 1:length(Nc)
-    p1=plot(NS.*Nspan, max_snr(1:10,i), colors{i});
+    p1=plot(NS.*Nspan, max_snr(:,i), colors{i});
     hold('on')
 end
 t = strcat('SSFM vs ESSFM N_{step} =',{' '},int2str(n_prop_steps),{' '},...
