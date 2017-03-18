@@ -1,24 +1,24 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^12];
+symbols      = [2^18];
 
-forward_steps = [10, 10, 50, 100, 400];
-Rs            = [10, 25, 50, 100, 200];
+forward_steps = [10, 10,  50, 200, 800];
+Rs            = [10, 25,  50, 100, 200];
 Fn            = [5];
 etasp         = [0.5 .*10.^(Fn/10)];
 Nspan         = 40;
 
-N_steps{1}  = [0.025,0.25,0.5,1,2,4,8,10];
-N_steps{2}  = [0.025,0.25,0.5,1,2,4,8,10];
-N_steps{3}  = [0.025,0.25,0.5,1,4,8,10,20,40];
-N_steps{4}  = [0.025,0.25,0.5,1,4,8,10,20,40,80];
-N_steps{5}  = [0.025,0.25,0.5,1,4,8,10,20,40,80,160];
+N_steps{1}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+N_steps{2}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+N_steps{3}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+N_steps{4}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+N_steps{5}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
 
 N_coefficients{1}  = [1,3,5];
 N_coefficients{2}  = [1,3,5];
-N_coefficients{3}  = [1,3,5,9,17];
-N_coefficients{4}  = [1,3,5,9,17];
+N_coefficients{3}  = [1,3,5,9,13,17];
+N_coefficients{4}  = [1,3,5,9,13,17];
 N_coefficients{5}  = [1,3,5,9,17,33];
 
 for k = 1:length(Rs)
