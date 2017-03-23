@@ -1,7 +1,7 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^18];
+symbols      = [2^20,2^20,2^20,2^16,2^16];
 
 forward_steps = [10, 10,  50, 200, 800];
 Rs            = [10, 25,  50, 100, 200];
@@ -9,17 +9,17 @@ Fn            = [5];
 etasp         = [0.5 .*10.^(Fn/10)];
 Nspan         = 40;
 
-N_steps{1}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-N_steps{2}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-N_steps{3}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-N_steps{4}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-N_steps{5}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+N_steps{1}  = [1,5,10,20,40,80,120,160,200]./Nspan;
+N_steps{2}  = [1,5,10,20,40,80,120,160,200]./Nspan;
+N_steps{3}  = [1,5,10,20,40,80,120,160,200]./Nspan;
+N_steps{4}  = [1,5,10,20,40,80,120,160,200]./Nspan;
+N_steps{5}  = [1,5,10,20,40,80,120,160,200]./Nspan;
 
-N_coefficients{1}  = [1,3,5];
-N_coefficients{2}  = [1,3,5];
-N_coefficients{3}  = [1,3,5,9,13,17];
-N_coefficients{4}  = [1,3,5,9,13,17];
-N_coefficients{5}  = [1,3,5,9,17,33];
+N_coefficients{1}  = [1,5,16];
+N_coefficients{2}  = [1,5,16];
+N_coefficients{3}  = [1,5,17,33];
+N_coefficients{4}  = [1,5,33,65];
+N_coefficients{5}  = [1,17,33,65,129];
 
 for k = 1:length(Rs)
     tic
@@ -35,10 +35,9 @@ for k = 1:length(Rs)
     NS           = N_steps{k};
     Nc           = N_coefficients{k};
     
-    parfor  i = 1:length(NS)
-        disp_comp_max_snr(i) = DISPERSION_COMPENSATION_MAXSNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
-    end
     
+    disp_comp_max_snr(i) = ones(1,length(NS))*DISPERSION_COMPENSATION_MAXSNR(1,symbols,n_prop_steps,symbrate,etasp,Nspan);
+        
     print = ['DISP NS = [',num2str(NS),'] Max SNR = [',num2str(disp_comp_max_snr),'] dB '];
     disp(print);
     
