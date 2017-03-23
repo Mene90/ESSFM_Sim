@@ -14,6 +14,7 @@ classdef Channel
         aeff        % effective area [um^2]
         Lf          % fiber length [m]
         dz          % step size [m]
+        alphadB
         
         nplates 
         db0 
@@ -47,6 +48,7 @@ classdef Channel
             ch.dz       = LL/nstep;                % step size
             ch.n2       = n2;                      % nonlinear index
             ch.aeff     = aeff;                    % effective area [um^2]
+            ch.alphadB  = alphadB;
             
             ch.alphalin = (log(10)*1e-4)*alphadB;               % [m^-1]
             

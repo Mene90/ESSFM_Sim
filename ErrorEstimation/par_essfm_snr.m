@@ -59,7 +59,7 @@ if(dsp.nstep>1)
     end
 else
     for i = 1:round(Nspan*dsp.nstep)
-        [ux_enh, uy_enh]  = dsp.DBP_gpu_vec_essfm_inv(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh);
+        [ux_enh, uy_enh]  = dsp.DBP_gpu_vec_essfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh);
     end
 end
 

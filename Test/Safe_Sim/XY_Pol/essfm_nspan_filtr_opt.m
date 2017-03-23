@@ -36,7 +36,7 @@ y1s = y1s*exp(-1i*rotx);
 y2s = y2s*exp(-1i*roty);
 
 % Funzione errore
-f=[real(y1s-xout);imag(y1s-xout);real(y2s-yout);imag(y2s-yout)];
+f=[gather(real(y1s-xout));gather(imag(y1s-xout));gather(real(y2s-yout));gather(imag(y2s-yout))];
     
 return
 end

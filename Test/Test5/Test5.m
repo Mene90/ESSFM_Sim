@@ -1,17 +1,17 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^22];
-n_prop_steps = 100;
+symbols      = [2^14];
+n_prop_steps = 10;
 
-symbrate = 50;
+symbrate = 32;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
 % gamma    = 1.27e-3;
 
-NS  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-Nc  = [1,65];
+NS  = [1 20 40]./Nspan;
+Nc  = [1,2,33];
 
 tic
 for  j = 1:length(Nc)

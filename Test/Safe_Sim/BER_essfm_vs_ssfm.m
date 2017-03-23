@@ -22,7 +22,7 @@ lambda = 1.55e-6;        % [um]
 alf=0.2;
 al=alf*0.230258509299405*1e-3;        % attenuation parameter (1/m)
 b2=-21.67e-27; %parametro di GVD
-gm=gamma; %parametro di nonlinearità
+gm=gamma;%1.27e-3; %parametro di nonlinearità
 LL=1e5;      %lunghezza di propagazione
 Nspan=40;      %numero di span identiche
 % etasp=2;        %coeff. di emissione spontanea degli amplificatori
@@ -33,7 +33,7 @@ modul_BER='qpsk';   %'bpsk', 'qpsk', 'WGN'. Usato per calcolo BER
 pattern='debruijn'; %'debruijn', 'random', 'single'
 pattern_BER='random'; %'debruijn', 'random', 'single'. Usato per calcolo BER
 Rs=32e9;    %symbol rate [Hz]
-Ps_dBm = dBm;  %Range di potenze medie in ingresso da considerare [dBm]
+Ps_dBm=dBm;  %Range di potenze medie in ingresso da considerare [dBm]
 Ps=10.^(0.1*(Ps_dBm-30));    %potenza media (energia di ciascun impulso base/intervallo di segnalazione) [W]
 Plen=length(Ps);            %numero di valori di potenza da testare
 pls.shape='RRC';   %tipo di impulso
@@ -66,80 +66,76 @@ options = optimset('Algorithm','trust-region-reflective','Display','off','Jacobi
 %% Calcolo preliminare grandezze e vettori utili per la propagazione (che non cambiano all'interno del loop sulle potenze)
 
 % Sequenze da trasmettere:
-[patx(:,1), patmatx]    = Pattern.debruijn(1,4,2^10);
-[paty(:,1), patmaty]    = Pattern.debruijn(3,4,2^10);
-ax = transpose(1./sqrt(2.)*((2*patmatx(:,1)-1)+1i*(2.*patmatx(:,2)-1)));      % usata per ottimizzazione
-ay = transpose(1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2.*patmaty(:,2)-1)));      % usata per ottimizzazione
-
-ax_tx  = genera_sequenza(modul_BER,pattern_BER,dbl_BER);    % usata per calcolo BER (pol x)
-ay_tx  = genera_sequenza(modul_BER,pattern_BER,dbl_BER);    % usata per calcolo BER (pol y)
-arx_tx = (real(ax_tx)>=0)*2-1;                              % simboli della componente in fase       (pol x)
-aix_tx = (imag(ax_tx)>=0)*2-1;                              % simboli della componente in quadratura (pol y)
-ary_tx = (real(ay_tx)>=0)*2-1;                              % simboli della componente in fase       (pol x)
-aiy_tx = (imag(ay_tx)>=0)*2-1;                              % simboli della componente in quadratura (pol y)
+a=genera_sequenza(modul,pattern,dbl);                   % usata per ottimizzazione
+a_tx=genera_sequenza(modul_BER,pattern_BER,dbl_BER);    % usata per calcolo BER
+ar_tx=(real(a_tx)>=0)*2-1;                              % simboli della componente in fase
+ai_tx=(imag(a_tx)>=0)*2-1;                              % simboli della componente in quadratura
 
 % Segnale modulato, normalizzato a potenza unitaria:
-ux  = linpulses(ax,Nxs,pls);
-uy  = linpulses(ay,Nxs,pls);
-
-utx = linpulses(ax_tx,Nxs,pls);
-uty = linpulses(ay_tx,Nxs,pls);
-
-Tc=1.0/(Rs*Nxs);                  % intervallo di campionamento selezionato
+u=linpulses(a,Nxs,pls);
+utx=linpulses(a_tx,Nxs,pls);
+Tc=1.0/(Rs*Nxs);    %intervallo di campionamento selezionato
 
 %Filtro matchato:
 % - per ottimizzazione:
-N  = length(ux);
-df = Nxs/N;
-N1 = floor(N/2);
-N2 = ceil(N/2)-1;
-f  = df*[0:N2,-N1:-1];       %vettore delle frequenze normalizzate dopo la FFT
-Hf = filt(pls,f);
+N=length(u);
+df=Nxs/N;
+N1=floor(N/2);
+N2=ceil(N/2)-1;
+f=df*[0:N2,-N1:-1];   %vettore delle frequenze normalizzate dopo la FFT
+Hf=filt(pls,f);
 if (N2>N1)
     Hf(N1+1)=0.;
 end
 
 % - per calcolo BER:
-N      = length(utx);
-df     = Nxs/N;
-N1     = floor(N/2);
-N2     = ceil(N/2)-1;
-f      = df*[0:N2,-N1:-1];   %vettore delle frequenze normalizzate dopo la FFT
-Hf_BER = filt(pls,f);
+N=length(utx);
+df=Nxs/N;
+N1=floor(N/2);
+N2=ceil(N/2)-1;
+f=df*[0:N2,-N1:-1];   %vettore delle frequenze normalizzate dopo la FFT
+Hf_BER=filt(pls,f);
 if (N2>N1)
     Hf_BER(N1+1)=0.;
 end
 
 %Varianza del rumore ASE da aggiungere e rapporto segnale rumore complessivo:
-Gm1 = (exp(al*LL)-1.d0);                       %Gain of the amplifier minus 1 (G-1)
-N0  = Nspan*Gm1*hplank*clight/lambda*etasp;    %Accumulate ASE Noise PSD
-SNR = Ps/Rs/N0;                                %Es/N0
-% SNRdB=10*log10(SNR);
+Gm1=(exp(al*LL)-1.d0);                          %Gain of the amplifier minus 1 (G-1)
+N0=Nspan*Gm1*hplank*clight/lambda*etasp;        %Accumulate ASE Noise PSD
+SNR=Ps/Rs/N0;                                   %Es/N0
+SNRdB=10*log10(SNR);
 
 
 %% Ciclo sui valori di potenza in ingresso
-% err_fin_st=zeros(1,Plen);
-% err_fin_enh=zeros(1,Plen);
-% err_fin_st_derot=zeros(1,Plen);
-% err_fin_enh_derot=zeros(1,Plen);
+err_fin_st=zeros(1,Plen);
+err_fin_enh=zeros(1,Plen);
+err_fin_st_derot=zeros(1,Plen);
+err_fin_enh_derot=zeros(1,Plen);
 BER_st=zeros(1,Plen);
 BER_enh=zeros(1,Plen);
-% Copt=zeros(NC,Plen);
-
-for nn=1:Plen
+Copt=zeros(NC,Plen);
+parfor nn=1:Plen;
     
     %Segnale all'uscita della fibra con propagazione "esatta" (SSFM a tanti passi)
-    urx=ux;
-    ury=uy;
+    urx=u;
     sgn=sqrt(Nxs*0.5/SNR(nn)/Nspan);                        %deviazione standard campioni di rumore per ogni quadratura
-    for is = 1:Nspan
-        wnx = sgn*(randn(1,length(urx))+1i*randn(1,length(urx)));  %rumore AWGN
-        wny = sgn*(randn(1,length(ury))+1i*randn(1,length(ury)));
-        urx = urx+wnx;
-        ury = ury+wny;
-        [urx,ury] = ssfm(urx,ury,Ps(nn),Tc,alf,b2,gm,LL,Nstep_exact);                   %split step
+    for is=1:Nspan
+        wn=sgn*(randn(1,length(urx))+1i*randn(1,length(urx)));  %rumore AWGN
+        urx=urx+wn;
+        urx=ssfm(urx,Ps(nn),Tc,alf,b2,gm,LL,Nstep_exact);                   %split step
     end
-
+    
+    
+    %Calcolo del segnale backpropagato con propagazione "esatta" (SSFM a tanti passi)
+    %ufin=urx;
+    %for is=1:Nspan
+    %    ufin=ssfm(ufin,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nstep_exact);
+    %end
+    %Derotazione del segnale per compensare rumore di fase nonlineare medio
+    %fi=Nxs*gm*Nspan*Ps(nn)*sgn^2*(1-exp(-al*LL))/al;
+    %ufin=ufin*exp(-1i*fi);
+    
+    
     
     %% Funzione di errore da minimizzare (usa un puntatore ad una funzione anonima per passare i parametri extra):
     %Funzioni di errore globale:  (!!!solo filtr è effettivamente ottimizzata con derotazione e filtro matchato, le  altre 3 vanno sistemate!)
@@ -148,7 +144,7 @@ for nn=1:Plen
             fmin=@(C)essfm_nspan_filt_opt(urx,ufin,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nspan,Nstep,C);    %filtraggio dei moduli quadri con coeff. complessi
         case 'filtr',
             %              fmin=@(C)essfm_nspan_filtr_opt(urx,ufin,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nspan,Nstep,C);    %filtraggio dei moduli quadri con coeff. reali
-            fmin=@(C)essfm_nspan_filtr_opt(urx,ury,ax,ay,Nxs,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nspan,Nstep,C,Hf);    %filtraggio dei moduli quadri con coeff. reali
+            fmin=@(C)essfm_nspan_filtr_opt(urx,a,Nxs,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nspan,Nstep,C,Hf);    %filtraggio dei moduli quadri con coeff. reali
         case 'quadform',
             fmin=@(C)essfm_nspan_opt(urx,ufin,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nspan,Nstep,C);    %fase nonlineare pari a forma quadratica dei campioni
         case 'quadformr',
@@ -167,84 +163,98 @@ for nn=1:Plen
             C0=reshape(CC0,1,NC);
     end
     %Ottimizzazione dei coefficienti (nonlinear LSQ)
-    [C,err]=lsqnonlin(fmin,C0,[],[],options); 
-    Copt(:,nn) = C;
-end
-Copt
-%% Simulazione per calcolo della BER
-for nn=1:Plen    
+    [C,err]=lsqnonlin(fmin,C0,[],[],options);
+    
+    %Calcolo segnale all'uscita della fibra con i due algoritmi:
+    ufin_st=urx;
+    ufin_enh=urx;
+    if Nstep>=1,
+        for is=1:Nspan,
+            ufin_st=ssfm(ufin_st,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nstep);
+            ufin_enh=essfm(ufin_enh,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nstep,tipo_ESSFM,C);
+        end
+    else
+        for is=1:Nst_tot,
+            ufin_st=ssfm(ufin_st,Ps(nn)*exp(-al*LL),Tc,0.,-b2,-gm*(1.0-exp(al*LL))/(-al*LL),LL/Nstep,1);
+            ufin_enh=essfm(ufin_enh,Ps(nn)*exp(-al*LL),Tc,0.,-b2,-gm*(1.0-exp(al*LL))/(-al*LL),LL/Nstep,1,tipo_ESSFM,C);
+        end
+    end
+    % Filtro matchato:
+    ufin_st=ifft(fft(ufin_st).*Hf);
+    ufin_enh=ifft(fft(ufin_enh).*Hf);
+    
+    % Derotazione:
+    rot_st=angle(mean(ufin_st(1:Nxs:end).*conj(a)));
+    rot_enh=angle(mean(ufin_enh(1:Nxs:end).*conj(a)));
+    ufin_st_derot=ufin_st*exp(-1i*rot_st);
+    ufin_enh_derot=ufin_enh*exp(-1i*rot_enh);
+    
+    %Calcolo MSE all'uscita della fibra con i due algoritmi:
+    err_fin_st(nn)=mean(abs(ufin_st(1:Nxs:end)-a).^2);
+    err_fin_enh(nn)=mean(abs(ufin_enh(1:Nxs:end)-a).^2);
+    err_fin_st_derot(nn)=mean(abs(ufin_st_derot(1:Nxs:end)-a).^2);
+    err_fin_enh_derot(nn)=mean(abs(ufin_enh_derot(1:Nxs:end)-a).^2);
+    
+    
+    Copt(:,nn)=C;
+    
+    %% Simulazione per calcolo della BER
         
     %Segnale all'uscita della fibra con propagazione "esatta" (SSFM a tanti passi)
     urx=utx;
-    ury=uty;
-    
-    sgn=sqrt(Nxs*0.5/SNR(nn)/Nspan); 
     for is=1:Nspan
-        wnx=sgn*(randn(1,length(urx))+1i*randn(1,length(urx)));  %rumore AWGN
-        wny=sgn*(randn(1,length(ury))+1i*randn(1,length(ury)));  %rumore AWGN
-        urx=urx+wnx;
-        ury=ury+wny;
-        [urx,ury]=ssfm(urx,ury,Ps(nn),Tc,alf,b2,gm,LL,Nstep_exact);       %split step
+        wn=sgn*(randn(1,length(urx))+1i*randn(1,length(urx)));  %rumore AWGN
+        urx=urx+wn;
+        urx=ssfm(urx,Ps(nn),Tc,alf,b2,gm,LL,Nstep_exact);                   %split step
     end
         
     %Calcolo segnale backpropagato con i due algoritmi:
-    ufinx_st=urx;
-    ufiny_st=ury;
-    ufinx_enh=urx;
-    ufiny_enh=ury;
+    ufin_st=urx;
+    ufin_enh=urx;
     if Nstep>=1,
         for is=1:Nspan,
-            [ufinx_st,ufiny_st]   = ssfm (ufinx_st,ufiny_st,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nstep);
-            [ufinx_enh,ufiny_enh] = essfm(ufinx_enh,ufiny_enh,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nstep,tipo_ESSFM,Copt(:,nn));
+            ufin_st=ssfm(ufin_st,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nstep);
+            ufin_enh=essfm(ufin_enh,Ps(nn)*exp(-al*LL),Tc,-alf,-b2,-gm,LL,Nstep,tipo_ESSFM,C);
         end
     else
         for is=1:round(Nspan*Nstep),
-            [ufinx_st,ufiny_st] =ssfm(ufinx_st,ufiny_st,Ps(nn)*exp(-al*LL),Tc,0.,-b2,-gm*(1.0-exp(al*LL))/(-al*LL),LL/Nstep,1);
-            [ufinx_enh,ufiny_enh]=essfm(ufinx_enh,ufiny_enh,Ps(nn)*exp(-al*LL),Tc,0.,-b2,-gm*(1.0-exp(al*LL))/(-al*LL),LL/Nstep,1,tipo_ESSFM,Copt(:,nn));
+            ufin_st=ssfm(ufin_st,Ps(nn)*exp(-al*LL),Tc,0.,-b2,-gm*(1.0-exp(al*LL))/(-al*LL),LL/Nstep,1);
+            ufin_enh=essfm(ufin_enh,Ps(nn)*exp(-al*LL),Tc,0.,-b2,-gm*(1.0-exp(al*LL))/(-al*LL),LL/Nstep,1,tipo_ESSFM,C);
         end
     end
     
     
     % Filtro matchato:
-    ufinx_st=ifft(fft(ufinx_st).*Hf_BER);
-    ufiny_st=ifft(fft(ufiny_st).*Hf_BER);
-    ufinx_enh=ifft(fft(ufinx_enh).*Hf_BER);
-    ufiny_enh=ifft(fft(ufiny_enh).*Hf_BER);
+    ufin_st=ifft(fft(ufin_st).*Hf_BER);
+    ufin_enh=ifft(fft(ufin_enh).*Hf_BER);
     
     % Derotazione:
-    rotx_st=angle(mean(ufinx_st(1:Nxs:end).*conj(ax_tx)));
-    roty_st=angle(mean(ufiny_st(1:Nxs:end).*conj(ay_tx)));
-    rotx_enh=angle(mean(ufinx_enh(1:Nxs:end).*conj(ax_tx)));
-    roty_enh=angle(mean(ufiny_enh(1:Nxs:end).*conj(ay_tx)));
-    ufinx_st_derot=ufinx_st*exp(-1i*rotx_st);
-    ufiny_st_derot=ufiny_st*exp(-1i*roty_st);
-    ufinx_enh_derot=ufinx_enh*exp(-1i*rotx_enh);
-    ufiny_enh_derot=ufiny_enh*exp(-1i*roty_enh);
+    rot_st=angle(mean(ufin_st(1:Nxs:end).*conj(a_tx)));
+    rot_enh=angle(mean(ufin_enh(1:Nxs:end).*conj(a_tx)));
+    ufin_st_derot=ufin_st*exp(-1i*rot_st);
+    ufin_enh_derot=ufin_enh*exp(-1i*rot_enh);
+    err_fin_st(nn)=mean(abs(ufin_st(1:Nxs:end)-a_tx).^2);
+    err_fin_enh(nn)=mean(abs(ufin_enh(1:Nxs:end)-a_tx).^2);
+    err_fin_st_derot(nn)=mean(abs(ufin_st_derot(1:Nxs:end)-a_tx).^2);
+    err_fin_enh_derot(nn)=mean(abs(ufin_enh_derot(1:Nxs:end)-a_tx).^2);
     
     % misura BER:
-    arx_st  =(real(ufinx_st_derot(1:Nxs:end))>=0)*2-1;         % Received symbol (real part)
-    ary_st  =(real(ufiny_st_derot(1:Nxs:end))>=0)*2-1;
-    arx_enh =(real(ufinx_enh_derot(1:Nxs:end))>=0)*2-1;         % Received symbol (real part)
-    ary_enh =(real(ufiny_enh_derot(1:Nxs:end))>=0)*2-1;         % Received symbol (real part)
-    aix_st  =(imag(ufinx_st_derot(1:Nxs:end))>=0)*2-1;         % Received symbol (imaginary part)
-    aiy_st  =(imag(ufiny_st_derot(1:Nxs:end))>=0)*2-1;
-    aix_enh =(imag(ufinx_enh_derot(1:Nxs:end))>=0)*2-1;         % Received symbol (imaginary part)
-    aiy_enh =(imag(ufiny_enh_derot(1:Nxs:end))>=0)*2-1;
+    ar_st=(real(ufin_st_derot(1:Nxs:end))>=0)*2-1;                     	% Received symbol (real part)
+    ar_enh=(real(ufin_enh_derot(1:Nxs:end))>=0)*2-1;                     	% Received symbol (real part)
+    ai_st=(imag(ufin_st_derot(1:Nxs:end))>=0)*2-1;                     	% Received symbol (imaginary part)
+    ai_enh=(imag(ufin_enh_derot(1:Nxs:end))>=0)*2-1;                     	% Received symbol (imaginary part)
     
-    BER_st(nn) = 0.5*(0.5*(mean(arx_st~=arx_tx)+ mean(aix_st~=aix_tx))   + 0.5*(mean(ary_st~=ary_tx)  + mean(aiy_st~=aiy_tx)));
-    BER_enh(nn)= 0.5*(0.5*(mean(arx_enh~=arx_tx)+mean(aix_enh~=aix_tx)) + 0.5*(mean(ary_enh~=ary_tx) + mean(aiy_enh~=aiy_tx))); 
+    BER_st(nn)=0.5*(mean(ar_st~=ar_tx)+mean(ai_st~=ai_tx));
+    BER_enh(nn)=0.5*(mean(ar_enh~=ar_tx)+mean(ai_enh~=ai_tx));
     
-%     data(nn,:) = avgber;
-%     display(['Power[dBm] = '   , num2str(dBm(nn))    ,char(9)...
-%              'BER con SSFM = ' , num2str(BER_st(nn)) ,char(9)...
-%              'BER con ESSFM = ', num2str(BER_enh(nn))            ]);
-   
+    
+%     display(['BER con SSFM = ',num2str(BER_st(nn)),'  BER con ESSFM = ',num2str(BER_enh(nn))]);
+    
+    
+    
 end
-
- data = [BER_st;BER_enh]';
-% data =[Ps_dBm;BER_st;BER_enh]';
-% data = Copt';
-% save(output_name,'data','-ascii') %qui non salva, salva nel lanciatore
+data = [BER_st;BER_enh]';
+%save(output_name,'data','-ascii') %qui non salva, salva nel lanciatore
 
 
 end

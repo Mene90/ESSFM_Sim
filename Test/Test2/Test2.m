@@ -2,23 +2,23 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^16];
+symbols      = [2^18];
 n_prop_steps = 10;
 
-Fn       = [9];
+Fn       = [7];
 etasp    = [0.5 .*10.^(Fn/10)];
 gamma = 1.2e-3;
 
-NS  = [0.025,0.125,0.5];
-Nc  = [1  1 1];
+NS  = [0.025,0.025,0.025];
+Nc  = [1  5 45];
 dBm = (-2:6);
 
 for j = 1:length(symbols)
     
     for i = 1:length(NS)
         
-        data_1{i} = BER_ESSFM_XY(NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp);             
-        data_3{i} = BER_essfm_vs_ssfm (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp,gamma);       
+        data_1{i} = BER_ESSFM_XY(NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp); 
+        data_3{i} = BER_essfm_vs_ssfm (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp,gamma); 
         data_2{i} = BER_ESSFM_X (NS(i),Nc(i),dBm , symbols(j), n_prop_steps,etasp);
                
         BER{i}    = [data_1{i} data_2{i} data_3{i}];

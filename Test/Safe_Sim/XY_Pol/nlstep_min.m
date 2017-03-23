@@ -15,8 +15,11 @@ xx=[xx(M-N+2:M);xx;xx(1:N-1)];   %periodicamente
 %xx=[0;xx;0];                     %con zeri
 
 % Duplica il vettore dei coefficienti per avere risposta simmetrica
+if length(C)>1
 CC=[flipud(C);C(2:end)];
-
+else
+CC = flipud(C);
+end
 % Filtra il vettore dei moduli quadri con i coefficienti del filtro dato:
 theta=conv(xx,CC,'valid');
 

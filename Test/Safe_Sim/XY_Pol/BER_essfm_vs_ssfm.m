@@ -66,8 +66,10 @@ options = optimset('Algorithm','trust-region-reflective','Display','off','Jacobi
 %% Calcolo preliminare grandezze e vettori utili per la propagazione (che non cambiano all'interno del loop sulle potenze)
 
 % Sequenze da trasmettere:
-ax=genera_sequenza(modul,pattern,dbl);                   % usata per ottimizzazione
-ay=genera_sequenza(modul,pattern,dbl);                   % usata per ottimizzazione
+[patx(:,1), patmatx]    = Pattern.debruijn(1,4,2^10);
+[paty(:,1), patmaty]    = Pattern.debruijn(3,4,2^10);
+ax = transpose(1./sqrt(2.)*((2*patmatx(:,1)-1)+1i*(2.*patmatx(:,2)-1)));      % usata per ottimizzazione
+ay = transpose(1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2.*patmaty(:,2)-1)));      % usata per ottimizzazione
 
 ax_tx  = genera_sequenza(modul_BER,pattern_BER,dbl_BER);    % usata per calcolo BER (pol x)
 ay_tx  = genera_sequenza(modul_BER,pattern_BER,dbl_BER);    % usata per calcolo BER (pol y)
@@ -168,7 +170,7 @@ for nn=1:Plen
     [C,err]=lsqnonlin(fmin,C0,[],[],options); 
     Copt(:,nn) = C;
 end
-% Copt
+Copt
 %% Simulazione per calcolo della BER
 for nn=1:Plen    
         
@@ -229,16 +231,17 @@ for nn=1:Plen
     aix_enh =(imag(ufinx_enh_derot(1:Nxs:end))>=0)*2-1;         % Received symbol (imaginary part)
     aiy_enh =(imag(ufiny_enh_derot(1:Nxs:end))>=0)*2-1;
     
-    BER_st(nn) = 0.5*(0.5*(mean(arx_st~=arx_tx)+ mean(aix_st~=aix_tx))   + 0.5*(mean(ary_st~=ary_tx)  + mean(aiy_st~=aiy_tx)));
-    BER_enh(nn)= 0.5*(0.5*(mean(arx_enh~=arx_tx)+mean(aix_enh~=aix_tx)) + 0.5*(mean(ary_enh~=ary_tx) + mean(aiy_enh~=aiy_tx))); 
+    BER_st(nn) = gather(0.5*(0.5*(mean(arx_st~=arx_tx) + mean(aix_st~=aix_tx))   + 0.5*(mean(ary_st~=ary_tx)  + mean(aiy_st~=aiy_tx))));
+    BER_enh(nn)= gather(0.5*(0.5*(mean(arx_enh~=arx_tx)+ mean(aix_enh~=aix_tx))  + 0.5*(mean(ary_enh~=ary_tx) + mean(aiy_enh~=aiy_tx)))); 
     
-    display(['Power[dBm] = '   , num2str(dBm(nn))    ,char(9)...
-             'BER con SSFM = ' , num2str(BER_st(nn)) ,char(9)...
-             'BER con ESSFM = ', num2str(BER_enh(nn))            ]);
+%     data(nn,:) = avgber;
+%     display(['Power[dBm] = '   , num2str(dBm(nn))    ,char(9)...
+%              'BER con SSFM = ' , num2str(BER_st(nn)) ,char(9)...
+%              'BER con ESSFM = ', num2str(BER_enh(nn))            ]);
    
 end
 
-% data = [BER_st;BER_enh]';
+ data = [BER_st;BER_enh]';
 % data =[Ps_dBm;BER_st;BER_enh]';
 % data = Copt';
 % save(output_name,'data','-ascii') %qui non salva, salva nel lanciatore

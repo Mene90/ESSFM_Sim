@@ -88,7 +88,7 @@ Loss      = 10^(-Gerbio*0.1);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for nn=1:Plen
+parfor nn=1:Plen
       
     dsp       = DSP(ch,Ns_bprop);
     sig       = Signal(Nsymb,Nt,symbrate);
@@ -97,7 +97,7 @@ for nn=1:Plen
     ampli     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
     [patx{nn}(:,1), patmatx]    = Pattern.debruijn(1,4,Nsymb);
-    [paty{nn}(:,1), patmaty]    = Pattern.debruijn(1,4,Nsymb);
+    [paty{nn}(:,1), patmaty]    = Pattern.debruijn(8,4,Nsymb);
     
     E                  = Laser.GetLaserSource(Pavg(nn), nfft);
     
@@ -145,7 +145,7 @@ Hf_BER        = transpose(filt(pls,sig.FN));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   
-for nn=1:Plen
+parfor nn=1:Plen
  
  
     dsp       = DSP(ch,Ns_bprop);
@@ -187,7 +187,7 @@ for nn=1:Plen
     else
         for i = 1:round(Nspan*Nstep)
 %             [ux, uy]           = dsp.DBP_gpu_vec_ssfm (Pavg(nn)*Loss,sig_st_rx,ux,uy);
-            [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
+            [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm_prova(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
         end
     end
     

@@ -12,7 +12,7 @@ function [ f ] = gpu_vec_essfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf )
             end
         else
             for i=1:round(Nspan*dsp.nstep)
-                [ux, uy] = dsp.DBP_gpu_vec_essfm_inv(Pavg*Loss,rx_sig,C,ux,uy);
+                [ux, uy] = dsp.DBP_gpu_vec_essfm_optimized(Pavg*Loss,rx_sig,C,ux,uy);
             end
         end
         

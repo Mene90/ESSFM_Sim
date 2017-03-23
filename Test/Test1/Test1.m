@@ -8,8 +8,8 @@ n_prop_steps = 25;
 etasp = [10];
 gamma = 1.27e-3;
 
-NS  = [0.5 1];
-Nc  = [1 1];
+NS  = [0.025 0.025];
+Nc  = [1 11];
 dBm = (-1:8);
 
 for k = 1:length(etasp)
