@@ -105,7 +105,7 @@ system.mfil_snr  = Hf_SNR;
 system.mfil      = Hf;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-options = optimset('Display','off','TolX',1e-3);
+options = optimset('Display','iter','TolX',1e-3);
 funmax = @(Ps_dBm) -par_essfm_snr(Ps_dBm,ch,dsp,sig,t_sig,ampli,system,essfm);
 
 [P_max,max_snr] = fminbnd(funmax,range(1),range(2),options);

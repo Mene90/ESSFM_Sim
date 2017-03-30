@@ -53,7 +53,7 @@ ux_enh = ux;
 uy_enh = uy;
 sig_enh_rx = copy(sig);
 
-if(dsp.nstep>1)
+if(dsp.nstep>=1)
     for i = 1:Nspan
        [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh);
     end

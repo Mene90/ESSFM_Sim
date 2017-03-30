@@ -17,7 +17,7 @@ tic
 for  j = 1:length(Nc)
     nc = Nc(j);
     parfor  i = 1:length(NS)
-        max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,etasp,symbrate,Nspan,[-1 2]);
+        max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,etasp,symbrate,Nspan,[-1 6]);
     end
     print = ['ESSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',num2str(max_snr(:,j)'),'] dB ','NC = ',int2str(nc-1)];
     disp(print);
