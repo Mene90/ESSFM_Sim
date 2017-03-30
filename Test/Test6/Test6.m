@@ -2,28 +2,28 @@
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^16];
-n_prop_steps = 50;
+n_prop_steps = 100;
 
 symbrate = 50;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = [10:10:80];
 
-NS  = [1,2,4,5];
-Nc  = [13];
+NS  = [10];
+Nc  = [85];
 
 
 for  k = 1:length(NS)
     tic
     
-    for i = 1:length(Nspan)
+    parfor i = 1:length(Nspan)
         ssfm_max_snr(k,i) = ESSFM_MAX_SNR(NS(k)/Nspan(i),1,symbols,n_prop_steps,etasp,symbrate,Nspan(i));
     end
  
     print = ['SSFM  Nspan = [',int2str(Nspan),'] Max SNR = [',int2str(ssfm_max_snr(k,:)),'] dB NS = ', int2str(NS(k))];
     disp(print);
       
-    for  i = 1:length(Nspan)
+    parfor  i = 1:length(Nspan)
         max_snr(k,i) = ESSFM_MAX_SNR(NS(k)/Nspan(i),Nc,symbols,n_prop_steps,etasp,symbrate,Nspan(i));
     end
     
@@ -75,7 +75,7 @@ for i= 1:length(NS)
 end
 
 
-p1=plot(Nspan, disp_comp_max_snr(1,1:8));
+p1=plot(Nspan, disp_comp_max_snr(1,:));
 hold('on')
 
 
@@ -88,7 +88,7 @@ title(t);
 
 grid on;
 ylabel('SNR [dB]');
-xlabel('Distance [n° Span]');
+xlabel('Distance [nï¿½ Span]');
 
 legend(lgn)
 

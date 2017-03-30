@@ -1,25 +1,25 @@
 % addpath('C:\Users\mene9\Documents\MATLAB\ESSFM_Sim\Test\Safe_Sim\')
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
-symbols      = [2^18];
+symbols      = [2^16];
 
-forward_steps = [10, 10,  50, 200, 800];
-Rs            = [10, 25,  50, 100, 200];
+forward_steps = [100, 400];
+Rs            = [100, 200];
 Fn            = [5];
 etasp         = [0.5 .*10.^(Fn/10)];
 Nspan         = 40;
 
-N_steps{1}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-N_steps{2}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-N_steps{3}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-N_steps{4}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
-N_steps{5}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+% N_steps{1}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+% N_steps{2}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+% N_steps{3}  = [1,2,4,5,8,10,20,40,80,120,160,200]./Nspan;
+N_steps{1}  = [1,5,8,10,20,40,80,120,160,200]./Nspan;
+N_steps{2}  = [1,5,8,10,20,40,80,120,160,200]./Nspan;
 
-N_coefficients{1}  = [1,3,5];
-N_coefficients{2}  = [1,3,5];
-N_coefficients{3}  = [1,3,5,9,13,17];
-N_coefficients{4}  = [1,3,5,9,13,17];
-N_coefficients{5}  = [1,3,5,9,17,33];
+% N_coefficients{1}  = [1,3,17];
+% N_coefficients{2}  = [1,3,17];
+% N_coefficients{3}  = [1,3,17,23,33,65];
+N_coefficients{1}  = [1,3,26,51,101];
+N_coefficients{2}  = [1,3,26,51,101];
 
 for k = 1:length(Rs)
     tic
@@ -35,31 +35,29 @@ for k = 1:length(Rs)
     NS           = N_steps{k};
     Nc           = N_coefficients{k};
     
-    parfor  i = 1:length(NS)
-        disp_comp_max_snr(i) = DISPERSION_COMPENSATION_MAXSNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);
-    end
-    
-    print = ['DISP NS = [',num2str(NS),'] Max SNR = [',num2str(disp_comp_max_snr),'] dB '];
-    disp(print);
-    
-    
-    parfor  i = 1:length(NS)
-        ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,symbrate,etasp,Nspan);       
-    end
-    
-    print = ['SSFM NS = [',num2str(NS),'] Max SNR = [',num2str(ssfm_max_snr),'] dB '];
-    disp(print);
-    
-    
-    
     for  j = 1:length(Nc)
         nc = Nc(j);
         parfor  i = 1:length(NS)
-            max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,symbrate,etasp,Nspan);
+            max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,etasp,symbrate,Nspan);
         end
-        print = ['ESSFM NS = [',num2str(NS),'] Max SNR = [',num2str(max_snr(:,j)'),'] dB ','NC = ',int2str(nc-1)];
+        print = ['ESSFM NS = [',int2str(NS*Nspan),'] Max SNR = [',num2str(max_snr(:,j)'),'] dB ','NC = ',int2str(nc-1)];
         disp(print);
     end
+    
+    
+    disp_comp_max_snr = ones(1,length(NS))*DISPERSION_COMPENSATION_MAXSNR(0.025,symbols,n_prop_steps,symbrate,etasp,Nspan);
+    
+    print = ['DISP NS = [',int2str(NS*Nspan),'] Max SNR = [',num2str(disp_comp_max_snr),'] dB '];
+    disp(print);
+    
+    
+%     parfor  i = 1:length(NS)
+%         ssfm_max_snr(i) = SSFM_MAX_SNR(NS(i),symbols,n_prop_steps,etasp,symbrate,Nspan);       
+%     end
+%     
+%     print = ['SSFM NS = [',num2str(NS),'] Max SNR = [',num2str(ssfm_max_snr),'] dB '];
+%     disp(print);
+    
     toc
     
     fig = figure(k);
@@ -70,16 +68,16 @@ for k = 1:length(Rs)
                '-+b';'-+g';'-+r';...
                '-*b';'-*g';'-*r'};
     
-    lgn     = [({['DISP']}) ({['SSFM']})];
+    lgn     = [({['DISP']})];
     for i = 1:length(Nc)
         tmp(i,:)  = ({['ESSFM Nc = ' int2str(Nc(i)-1)]});
         lgn       = [lgn tmp(i,:)];
     end
     
-    p1 = plot(NS, disp_comp_max_snr, '-sk', NS, ssfm_max_snr, '-*k');
+    p1 = plot(NS*Nspan, disp_comp_max_snr, '-sk');
     hold('on')
     for i= 1:length(Nc)
-        p1=plot(NS, max_snr(:,i), colors{i});
+        p1=plot(NS*Nspan, max_snr(:,i), colors{i});
         hold('on')
     end
     t = strcat('SSFM vs ESSFM N_{step} =',{' '},int2str(n_prop_steps),{' '},...
@@ -92,7 +90,7 @@ for k = 1:length(Rs)
     
     grid on;
     ylabel('SNR [dB]');
-    xlabel('n° steps');
+    xlabel('nï¿½ steps');
     
     legend(lgn)
     
