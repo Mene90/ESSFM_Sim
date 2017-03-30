@@ -83,19 +83,19 @@ classdef DSP
                         
         end
         
-        function [ux, uy]   = DBP_gpu_vec_ssfm (dsp,Pavg,sig,ux,uy)
+        function [ux, uy]   = DBP_gpu_vec_ssfm (dsp,Pavg,sig,ux,uy,Nspan)
                             
             channel = dsp.ch;
-            dz      = dsp.dz;
-            halfdz      = dz/2;
+            dz = dsp.dz;
             
-            omega = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
-            betaz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*dz));
-            betahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*halfdz));
+            omega        = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
+            betaz        = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*dz));
+            firstbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+            lastbetahz   = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+            nsteps = dsp.nstep;
             
-            
-            if(dsp.nstep>=1)
-                        
+            if(dsp.nstep>1)
+                
                 if abs(channel.alphalin*dz) > 1e-6
                     Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
                 else
@@ -103,25 +103,41 @@ classdef DSP
                 end
                 
                 z    = dsp.dz*(0:dsp.nstep-1);
-                
                 xi   = gpuArray(-channel.gamma*Leff*exp(channel.alphalin*z)*Pavg);
-                                
-            else
                 
-                Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf);
-                xi       = gpuArray(-channel.gamma*Leff*Pavg*dz);
-            
+            elseif(dsp.nstep == 1)
+            firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.1*dz));
+            lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.9*dz));
+                if abs(channel.alphalin*dz) > 1e-6
+                    Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
+                else
+                    Leff     = dz;
+                end
+                xi       = gpuArray(-channel.gamma*Leff*Pavg);
+            elseif(dsp.nstep < 1)
+                vLf   = Nspan * channel.Lf;
+                nsteps = vLf/dz;
+                if(mod(dz,channel.Lf)==0)
+                    firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+                    lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+                end
+                if abs(channel.alphalin*dz) > 1e-6
+                    Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
+                else
+                    Leff     = dz;
+                end
+                xi       = ones(1,nsteps).*gpuArray(-channel.gamma*Leff*Pavg);
             end
                 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                           HALF DZ GVD                      %
             %                                DZ SPM                      %
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            [ux,uy] = dsp.vec_lin_step(-betahz,ux,uy);
+            [ux,uy] = dsp.vec_lin_step(-firstbetahz,ux,uy);
             [ux,uy] = dsp.vec_nl_step(xi(1),ux,uy);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         
-            for i=2:dsp.nstep
+            for i=2:nsteps
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %                           DZ GVD                       %
@@ -137,7 +153,7 @@ classdef DSP
             %                      LAST HALF DZ GVD                      %
             %                      LAST      DZ SPM                      %
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            [ux,uy] = dsp.vec_lin_step(-betahz,ux,uy);
+            [ux,uy] = dsp.vec_lin_step(-lastbetahz,ux,uy);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
         end
@@ -383,16 +399,99 @@ classdef DSP
             
         end
         
-        function [ux,uy]    = DBP_gpu_vec_essfm_optimized (dsp,Pavg,sig,C,ux,uy)
+        function [ux,uy]    = DBP_gpu_vec_essfm_optimized (dsp,Pavg,sig,C,ux,uy,Nspan)
             
             channel = dsp.ch;
             dz = dsp.dz;
-%             halfdz      = dz/2;
             
             omega        = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
             betaz        = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*dz));
-            firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*channel.alphadB*dz));
-            secondbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*(1-channel.alphadB)*dz));
+            firstbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+            lastbetahz   = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+            nsteps = dsp.nstep;
+            
+            if(dsp.nstep>1)
+                
+                if abs(channel.alphalin*dz) > 1e-6
+                    Leff     = -(1-exp(channel.alphalin*dz))/channel.alphalin;
+                else
+                    Leff     = dz;
+                end
+                
+                z    = dsp.dz*(0:dsp.nstep-1);
+                xi   = gpuArray(-channel.gamma*Leff*exp(channel.alphalin*z)*Pavg);
+                
+            elseif(dsp.nstep == 1)
+            firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.1*dz));
+            lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.9*dz));
+                if abs(channel.alphalin*dz) > 1e-6
+                    Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
+                else
+                    Leff     = dz;
+                end
+                xi       = gpuArray(-channel.gamma*Leff*Pavg);
+            elseif(dsp.nstep < 1)
+                vLf   = Nspan * channel.Lf;
+                nsteps = vLf/dz;
+                if(mod(dz,channel.Lf)==0)
+                    firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+                    lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+                end
+                if abs(channel.alphalin*dz) > 1e-6
+                    Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
+                else
+                    Leff     = dz;
+                end
+                xi       = ones(1,nsteps).*gpuArray(-channel.gamma*Leff*Pavg);
+            end
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                           HALF DZ GVD                      %
+            %                                DZ SPM                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            [ux,uy] = dsp.vec_lin_step(-firstbetahz,ux,uy);
+            [ux,uy] = dsp.vec_nl_essfm_step(-xi(1)*C,ux,uy,sig);            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            for i=2:nsteps
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %                           DZ GVD                       %
+                %                           DZ SPM                       %
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                [ux,uy] = dsp.vec_lin_step(-betaz,ux,uy);
+                [ux,uy] = dsp.vec_nl_essfm_step(-xi(i)*C,ux,uy,sig);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+            end
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                      LAST HALF DZ GVD                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            [ux,uy] = dsp.vec_lin_step(-lastbetahz,ux,uy);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+        end
+        
+        function [ux,uy]    = DBP_gpu_vec_filssfm_optimized (dsp,Pavg,sig,C,ux,uy,Nspan,bw)
+            
+            pls.shape = 'gauss';
+            pls.ord   = 2;
+            pls.bw    = bw;
+            H = transpose(filt(pls,sig.FN));
+            
+            channel = dsp.ch;
+            dz = dsp.dz;
+            %             halfdz      = dz/2;
+            
+            omega         = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
+            betaz         = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*dz));
+            
+            firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+            lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+            nsteps = dsp.nstep;
+%             firstbetahz   = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*channel.alphadB*dz));
+%             secondbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*(1-channel.alphadB)*dz));
             
             
             if(dsp.nstep>1)
@@ -407,6 +506,8 @@ classdef DSP
                 xi   = gpuArray(-channel.gamma*Leff*exp(channel.alphalin*z)*Pavg);
                 
             elseif(dsp.nstep == 1)
+                firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.1*dz));
+                lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.9*dz));
                 if abs(channel.alphalin*dz) > 1e-6
                     Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
                 else
@@ -414,17 +515,21 @@ classdef DSP
                 end
                 xi       = gpuArray(-channel.gamma*Leff*Pavg);
             elseif(dsp.nstep < 1)
-%                 SpanXSteps = dz/channel.Lf;
+                vLf   = Nspan * channel.Lf;
+                nsteps = vLf/dz;
+                %                 SpanXSteps = dz/channel.Lf;
                 if(mod(dz,channel.Lf)==0)
-                    firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*(channel.alphadB*dz-(1-channel.alphadB)*channel.Lf)));
-                    secondbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*((1-channel.alphadB)*(dz+channel.Lf))));
+                    firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+                    lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
+%                     firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*(channel.alphadB*dz-(1-channel.alphadB)*channel.Lf)));
+%                     secondbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*((1-channel.alphadB)*(dz+channel.Lf))));
                 end
                 if abs(channel.alphalin*dz) > 1e-6
                     Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
                 else
                     Leff     = dz;
                 end
-                xi       = gpuArray(-channel.gamma*Leff*Pavg);
+                xi       = ones(1,nsteps).*gpuArray(-channel.gamma*Leff*Pavg);
             end
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -432,17 +537,17 @@ classdef DSP
             %                                DZ SPM                      %
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             [ux,uy] = dsp.vec_lin_step(-firstbetahz,ux,uy);
-            [ux,uy] = dsp.vec_nl_essfm_step(-xi(1)*C,ux,uy);            
+            [ux,uy] = dsp.vec_nl_filtssfm_step(-C*xi(1),ux,uy,sig,H);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            for i=2:dsp.nstep
+            for i=2:nsteps
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %                           DZ GVD                       %
                 %                           DZ SPM                       %
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 [ux,uy] = dsp.vec_lin_step(-betaz,ux,uy);
-                [ux,uy] = dsp.vec_nl_essfm_step(-xi(i)*C,ux,uy);
+                [ux,uy] = dsp.vec_nl_filtssfm_step(-C*xi(i),ux,uy,sig,H);
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
             end
@@ -450,7 +555,7 @@ classdef DSP
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                      LAST HALF DZ GVD                      %
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            [ux,uy] = dsp.vec_lin_step(-secondbetahz,ux,uy);
+            [ux,uy] = dsp.vec_lin_step(-lastbetahz,ux,uy);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
         end
@@ -818,11 +923,9 @@ classdef DSP
             
         end
         
-        function [ux,uy]    = vec_nl_essfm_step(obj,C,ux,uy)
-            
-            
+        function [ux,uy]    = vec_nl_essfm_step(obj,C,ux,uy,sig)
+
             pow = abs(ux).^2 + abs(uy).^2;
-            
             M=length(pow);
             N=length(C);
             per_pow =[pow(M-N+2:M);pow;pow(1:N-1)];
@@ -832,12 +935,19 @@ classdef DSP
                 CC = [flipud(C)];
             end
             theta=conv(per_pow,CC,'valid');
-            
             ux = ux.*exp(1i*theta*8/9);
             uy = uy.*exp(1i*theta*8/9);
             
         end
-        
+                
+        function [ux,uy]    = vec_nl_filtssfm_step(obj,xi,ux,uy,sig,H)
+            
+            pow   = abs(ux).^2+abs(uy).^2;
+            theta = ifft(fft(xi.*pow).*H);
+            ux = ux.*exp(1i*theta*8/9);
+            uy = uy.*exp(1i*theta*8/9);
+            
+        end
     end
     
 end

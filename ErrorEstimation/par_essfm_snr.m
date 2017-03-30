@@ -55,12 +55,10 @@ sig_enh_rx = copy(sig);
 
 if(dsp.nstep>1)
     for i = 1:Nspan
-       [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh);
+       [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh);
     end
-else
-    for i = 1:round(Nspan*dsp.nstep)
-        [ux_enh, uy_enh]  = dsp.DBP_gpu_vec_essfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh);
-    end
+else  
+    [ux_enh, uy_enh]      = dsp.DBP_gpu_vec_essfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh,Nspan);
 end
 
 set(sig_enh_rx,'FIELDX',gather(ux_enh));

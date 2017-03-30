@@ -11,6 +11,8 @@ function H = filt(pls,f)
 if strcmp(pls.shape,'G')
     %impulso supergaussiano di ordine pls.ord e di banda (passabasso a 3dB) pls.bw
     H=exp(-0.5*log(2)*((f./(0.5*pls.bw)).^(2*pls.ord)));
+elseif strcmp(pls.shape, 'gauss')
+    H = exp(-0.5*log(2).*f/pls.bw.*f/pls.bw);
 elseif strcmp(pls.shape,'RC')
     fn=f/pls.bw;    %frequenza normalizzata alla banda
     ro=pls.ord;     %roll-off
