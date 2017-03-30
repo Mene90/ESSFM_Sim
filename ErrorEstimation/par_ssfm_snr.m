@@ -33,9 +33,7 @@ if(dsp.nstep>=1)
         [ux, uy]   = dsp.DBP_gpu_vec_ssfm(Pavg*Loss,sig_st_rx,ux,uy);
     end
 else
-    for i = 1:round(Nspan*dsp.nstep)
-        [ux, uy]   = dsp.DBP_gpu_vec_ssfm(Pavg*Loss,sig_st_rx,ux,uy);
-    end
+        [ux, uy]   = dsp.DBP_gpu_vec_ssfm(Pavg*Loss,sig_st_rx,ux,uy,Nspan);
 end
 
 set(sig_st_rx,'FIELDX',gather(ux));

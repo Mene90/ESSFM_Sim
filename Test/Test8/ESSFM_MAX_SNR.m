@@ -1,4 +1,4 @@
-function [ max_snr,P_max ] = ESSFM_MAX_SNR( Nstep,NC,sym_length,n_prop_steps,etasp,R,Nspan,range)
+function [ max_snr,P_max ] = ESSFM_MAX_SNR( Nstep,NC,sym_length,n_prop_steps,etasp,R,Nspan)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7,7 +7,7 @@ symbrate  = R;                    % symbol rate [Gbaud]
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 LL        = 1e5;                  % length [m]
-alphadB   = 0.2;                % attenuation [dB/km]
+alphadB   = 0.2;                  % attenuation [dB/km]
 aeff      = 85;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
 lambda    = 1550;                 % wavelength [nm] @ dispersion
@@ -32,7 +32,7 @@ dsp       = DSP(ch,Ns_bprop);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Trainin Signal parameters                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Nsymb     = 2^16;                % number of symbols
+Nsymb     = 2^10;                % number of symbols
 Nt        = 2;                   % points x symbol
 t_sig     = Signal(Nsymb,Nt,symbrate);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -74,8 +74,8 @@ seedy = t_sig.NSYMB/2^3;
 E                       = Laser.GetLaserSource(1, t_nfft);
 
 set(t_sig,'FIELDX_TX',1./sqrt(2.)*((2*patmatx(:,1)-1)+1i*(2.*patmatx(:,2)-1)));
-set(t_sig,'FIELDY_TX',1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2.*patmaty(:,2)-1)));
 set(t_sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmatx-1, t_sig, pls));
+set(t_sig,'FIELDY_TX',1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2.*patmaty(:,2)-1)));
 set(t_sig,'FIELDY'   ,Modulator.ApplyModulation(E, 2*patmaty-1, t_sig, pls));
 
 essfm.NC     = NC;
@@ -105,10 +105,10 @@ system.mfil_snr  = Hf_SNR;
 system.mfil      = Hf;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-options = optimset('Display','off','TolX',1e-3);
+options = optimset('Display','off','TolX',1e-1);
 funmax = @(Ps_dBm) -par_essfm_snr(Ps_dBm,ch,dsp,sig,t_sig,ampli,system,essfm);
 
-[P_max,max_snr] = fminbnd(funmax,range(1),range(2),options);
+[P_max,max_snr] = fminbnd(funmax,-2,10,options);
 max_snr = -max_snr;
 end
 

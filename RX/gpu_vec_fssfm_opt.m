@@ -1,5 +1,5 @@
-function [ f ] = gpu_vec_essfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf )
-%VEC_ESSFM_OPT Summary of this function goes here
+function [ f ] = gpu_vec_fssfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf,bw )
+%GPU_VEC_FSSFM_OPT Summary of this function goes here
 %   Detailed explanation goes here
         rx_sig     = copy(sig);
               
@@ -8,10 +8,10 @@ function [ f ] = gpu_vec_essfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf )
         
         if(dsp.nstep>=1)
             for i = 1:Nspan
-                [ux, uy] = dsp.DBP_gpu_vec_essfm_optimized(Pavg*Loss,rx_sig,C,ux,uy);
+                [ux, uy] = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,rx_sig,C,ux,uy,Nspan,bw);
             end
         else
-            [ux, uy] = dsp.DBP_gpu_vec_essfm_optimized(Pavg*Loss,rx_sig,C,ux,uy,Nspan);
+            [ux, uy] = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,rx_sig,C,ux,uy,Nspan,bw);
         end
         
         
@@ -41,7 +41,6 @@ function [ f ] = gpu_vec_essfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf )
         f = [X;Y];
    
         return
-
 
 end
 

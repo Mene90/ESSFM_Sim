@@ -11,7 +11,7 @@ function [ data ] = BER_ESSFM_XY(Nstep,NC,dBm,sym_length,n_prop_steps,etasp)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-LL        = 1e5;                % length [m]
+LL        = 1e5;                  % length [m]
 alphadB   = 0.2;                  % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
@@ -36,7 +36,7 @@ Ns_bprop = Nstep;                  % SSFM and ESSFM backpropagation steps
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-symbrate  = 32;                  % symbol rate [Gbaud]
+symbrate  = 50;                  % symbol rate [Gbaud]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Pulse parameters                               %
@@ -63,7 +63,7 @@ Gerbio    = alphadB*LL*1e-3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Trainin Signal parameters                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Nsymb     = 2^14;                % number of symbols
+Nsymb     = 2^16;                % number of symbols
 Nt        = 2;                   % points x symbol
 nfft      = Nsymb * Nt;
 sig       = Signal(Nsymb,Nt,symbrate);
@@ -73,7 +73,6 @@ sig       = Signal(Nsymb,Nt,symbrate);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Hf       = gpuArray(transpose(filt(pls,sig.FN)));
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         ESSFM PARAMETERS                               %
@@ -86,18 +85,18 @@ C0        = zeros(NC,1);
 C0(1,1)   = 1;
 Loss      = 10^(-Gerbio*0.1);
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parfor nn=1:Plen
       
     dsp       = DSP(ch,Ns_bprop);
     sig       = Signal(Nsymb,Nt,symbrate);
-    
+    seedx = 1;
+    seedy = sig.NSYMB/2^3;
     
     ampli     = Ampliflat(Pavg(nn),ch,Gerbio,etasp);
     
-    [patx{nn}(:,1), patmatx]    = Pattern.debruijn(1,4,Nsymb);
-    [paty{nn}(:,1), patmaty]    = Pattern.debruijn(8,4,Nsymb);
+    [patx{nn}(:,1), patmatx]    = Pattern.debruijn(seedx,4,Nsymb);
+    [paty{nn}(:,1), patmaty]    = Pattern.debruijn(seedy,4,Nsymb);
     
     E                  = Laser.GetLaserSource(Pavg(nn), nfft);
     
@@ -185,10 +184,11 @@ parfor nn=1:Plen
             [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
         end
     else
-        for i = 1:round(Nspan*Nstep)
-%             [ux, uy]           = dsp.DBP_gpu_vec_ssfm (Pavg(nn)*Loss,sig_st_rx,ux,uy);
-            [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm_prova(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
-        end
+%         for i = 1:round(Nspan*Nstep)
+% %             [ux, uy]           = dsp.DBP_gpu_vec_ssfm (Pavg(nn)*Loss,sig_st_rx,ux,uy);
+%             [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm_optimized(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh);
+%         end
+          [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_essfm_optimized(Pavg(nn)*Loss,sig_enh_rx,C(nn,:)',ux_enh,uy_enh,Nspan);
     end
     
     set(sig_st_rx,'FIELDX',gather(ux));
