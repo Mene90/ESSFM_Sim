@@ -6,7 +6,7 @@ function [ f ] = gpu_vec_fssfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf,bw )
         NT      = get(rx_sig,'NT'       );
         Pavg    = get(rx_sig,'POWER'    );
         
-        if(dsp.nstep>=1)
+        if(dsp.nstep>1)
             for i = 1:Nspan
                 [ux, uy] = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,rx_sig,C,ux,uy,Nspan,bw);
             end
