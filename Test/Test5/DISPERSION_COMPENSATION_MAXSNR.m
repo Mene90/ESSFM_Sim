@@ -72,7 +72,7 @@ system.mfil_snr  = Hf_SNR;
 options = optimset('Display','off','TolX',3e-1);
 funmax = @(Ps_dBm) -par_disp_comp_snr(Ps_dBm,ch,dsp,sig,ampli,system);
 
-[P_max,max_snr] = fminbnd(funmax,-2,10,options);
+[P_max,max_snr] = fminbnd(funmax,-8,8,options);
 max_snr = -max_snr;
 end
 
