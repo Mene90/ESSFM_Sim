@@ -1,4 +1,4 @@
-function [ data ] = Coeff_vs_filt( Nstep,NC,dBm,sym_length,n_prop_steps,etasp )
+function [ data ] = Coeff_vs_filt( Nstep,NC,dBm,sym_length,n_prop_steps,etasp,ord )
 %% Example of FIELD propagation with single polarization
 % This example calculate the ber of the received field after
 % backpropagation. The programm is basically divided in slots. 
@@ -47,7 +47,7 @@ Plen     = length(Ps_dBm);
 
 pls.shape   = 'RRC';
 pls.bw      = 1.0;                       % duty cycle
-pls.ord     = 0.2;                       % pulse roll-off
+pls.ord     = ord;                         % pulse roll-off
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Amplifier parameters                           %
@@ -142,10 +142,10 @@ sig       = Signal(Nsymb,Nt,symbrate);
 % Hf_BER        = transpose(filt(pls,sig.FN));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pls.shape = 'gauss';
-pls.ord   = 2;
-pls.bw    = bw;
-H = ifft(transpose(filt(pls,sig.FN)));
+gpls.shape = 'gauss';
+gpls.ord   = 2;
+gpls.bw    = bw;
+H = ifft(transpose(filt(gpls,sig.FN)));
 Hf = [H(length(H)-(length(Coeff)-2):end);H(1:length(Coeff))];
 CC = [flipud(Coeff);Coeff(2:end)];
 fig=figure(1);
@@ -157,7 +157,7 @@ legend('Gauss Filt',lg{1,1}{1,1});
 
 savefig(fig,strcat('plot/Ns',...
     int2str(dsp.nstep*Nspan),...
-    '_Nc',int2str(length(Coeff)-1),'_dBm',int2str(Ps_dBm(1)),'_lengthtrain',int2str(log2(trainlength)),'.fig'));
+    '_Nc',int2str(length(Coeff)-1),'_dBm',int2str(Ps_dBm(1)),'_Lt',int2str(log2(trainlength)),'_plsord',int2str(pls.ord*10),'.fig'));
 hold('off');
 close(fig);
 

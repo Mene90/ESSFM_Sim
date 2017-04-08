@@ -437,6 +437,23 @@ classdef DSP
             elseif(dsp.nstep < 1)
                 vLf   = Nspan * channel.Lf;
                 nsteps = vLf/dz;
+                
+                if abs(channel.alphalin*dz) > 1e-6
+                    Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
+                else
+                    Leff     = dz;
+                end
+%                 Lfs    = channel.Lf*(0:(Nspan/nsteps));
+%                 alph = channel.alphalin;
+% %                 ints   = exp(alph.*Lfs)/alph^2.*(alph.*Lfs+1)-exp(-alph.*Lfs).*(alph.*Lfs-1-alph*Lfs(1));
+% %                 z0     = Pavg*sum(ints)/vLf;
+%                 fun  = @(z) z.*Pavg.*exp(alph.*z);
+%                 int = 0;
+%                 for i = 2:(Nspan/nsteps)
+%                 int=int + integral(@(z) z.*Pavg.*exp(-alph.*(z-Lfs(i-1))) ,Lfs(i-1),Lfs(i));
+%                 end
+%                 z0 = int/(Nspan/nsteps);
+%                 r = z0/dz;
                 if(not(nsteps == 20))
                     r = 0.5;
                 end
@@ -445,11 +462,7 @@ classdef DSP
                     firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*(1-r)*dz));
                     lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*r*dz));
                 end
-                if abs(channel.alphalin*dz) > 1e-6
-                    Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;
-                else
-                    Leff     = dz;
-                end
+ 
                 xi       = ones(1,nsteps).*gpuArray(-channel.gamma*Leff*Pavg);
             end
             
