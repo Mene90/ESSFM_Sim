@@ -1,4 +1,4 @@
-function [ avg_snr ] = par_fssfm_snr( Ps_dBm,ch,dsp,SNR_sig,tr_sig,ampli_par,system,essfm )
+function [ avg_snr ] = par_fssfm_snr( Ps_dBm,ch,dsp,SNR_sig,tr_sig,ampli_par,system,fssfm )
 sig   = copy(SNR_sig);
 t_sig = copy(tr_sig);
 
@@ -19,8 +19,8 @@ ampli     = Ampliflat(Pavg,ch,ampli_par.G,ampli_par.e);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         ESSFM PARAMETERS                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-options   = essfm.opt;
-C0        = zeros(essfm.NC,1);
+options   = fssfm.opt;
+C0        = zeros(fssfm.NC,1);
 C0(1,1)   = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                               TRAINING                                  %
@@ -34,7 +34,7 @@ C0(1,1)   = 1;
         [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg,t_sig,ux,uy);
     end
     
-    fmin      = @(C) gpu_vec_fssfm_opt(t_sig,ux,uy,dsp,C,Nspan,Loss,Hf);
+    fmin      = @(C) gpu_vec_fssfm_opt(t_sig,ux,uy,dsp,C,Nspan,Loss,Hf,fssfm.bw);
     [C(1,:),err]=lsqnonlin(fmin,C0,[],[],options);
 
 
@@ -55,10 +55,10 @@ sig_enh_rx = copy(sig);
 
 if(dsp.nstep>1)
     for i = 1:Nspan
-       [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh);
+       [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh,Nspan,fssfm.bw);
     end
 else  
-    [ux_enh, uy_enh]      = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh,Nspan);
+    [ux_enh, uy_enh]      = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh,Nspan,fssfm.bw);
 end
 
 set(sig_enh_rx,'FIELDX',gather(ux_enh));

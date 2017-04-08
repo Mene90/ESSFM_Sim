@@ -2,16 +2,15 @@
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^16];
-n_prop_steps = 25;
+n_prop_steps = 50;
 
-symbrate = 25;
+symbrate = 50;
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
-% gamma    = 1.27e-3;
 
-NS  = [1,5,10]./Nspan;
-Nc  = [1,9];
+NS  = [1,5,10,20,40,200,400]./Nspan;
+Nc  = [1,17,33,65];
 
 tic
 for  j = 1:length(Nc)
@@ -25,7 +24,7 @@ end
 toc
 
 tic
-parfor  i = 1:length(NS)
+for  i = 1:length(NS)
         ssfm_max_snr(i) = FSSFM_MAX_SNR(NS(i),symbols,n_prop_steps,etasp,symbrate,Nspan,[-8 8]);        
 end
 print = ['FSSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',int2str(ssfm_max_snr),'] dB '];

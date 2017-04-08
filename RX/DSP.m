@@ -503,17 +503,13 @@ classdef DSP
             
             channel = dsp.ch;
             dz = dsp.dz;
-            %             halfdz      = dz/2;
             
             omega         = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;         % [rad/s]
             betaz         = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*dz));
             
             firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
             lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
-            nsteps = dsp.nstep;
-%             firstbetahz   = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*channel.alphadB*dz));
-%             secondbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*(1-channel.alphadB)*dz));
-            
+            nsteps = dsp.nstep;            
             
             if(dsp.nstep>1)
                 
@@ -538,12 +534,9 @@ classdef DSP
             elseif(dsp.nstep < 1)
                 vLf   = Nspan * channel.Lf;
                 nsteps = vLf/dz;
-                %                 SpanXSteps = dz/channel.Lf;
                 if(mod(dz,channel.Lf)==0)
                     firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
                     lastbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*0.5*dz));
-%                     firstbetahz = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*(channel.alphadB*dz-(1-channel.alphadB)*channel.Lf)));
-%                     secondbetahz  = gpuArray(complex((0.5*omega.^2*channel.b2 + omega.^3*channel.b3/6)*((1-channel.alphadB)*(dz+channel.Lf))));
                 end
                 if abs(channel.alphalin*dz) > 1e-6
                     Leff     = (1.0-exp(channel.alphalin*channel.Lf))/(-channel.alphalin*channel.Lf)*dz;

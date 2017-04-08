@@ -1,4 +1,4 @@
-function [ max_snr,P_max ] = ESSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,etasp,R,Nspan,range)
+function [ max_snr,P_max ] = FSSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,etasp,R,Nspan,range)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6,12 +6,12 @@ symbrate  = R;                    % symbol rate [Gbaud]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-LL        = 1e5;                  % length [m]
+LL        = 0.8e5;                  % length [m]
 alphadB   = 0.2;                % attenuation [dB/km]
-aeff      = 85;                   % effective area [um^2]
+aeff      = 80;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
 lambda    = 1550;                 % wavelength [nm] @ dispersion
-D         = 17;                   % dispersion [ps/nm/km] @ wavelength
+D         = 16;                   % dispersion [ps/nm/km] @ wavelength
 S         = 0;                    % slope [ps/nm^2/km] @ wavelength
 
 Ns_prop   = n_prop_steps;         % number of SSFM propagation step
@@ -57,7 +57,7 @@ options = optimset('Algorithm','trust-region-reflective','Display','off',...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pls.shape   = 'RRC';
 pls.bw      = 1.0;                       % duty cycle
-pls.ord     = 1;                       % pulse roll-off
+pls.ord     = 0.1;                       % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -78,8 +78,9 @@ set(t_sig,'FIELDY_TX',1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2.*patmaty(:,2)-1)));
 set(t_sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmatx-1, t_sig, pls));
 set(t_sig,'FIELDY'   ,Modulator.ApplyModulation(E, 2*patmaty-1, t_sig, pls));
 
-essfm.NC     = 1;
-essfm.opt    = options;
+fssfm.NC     = 1;
+fssfm.opt    = options;
+fssfm.bw     = 0.02;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       SNR Matched filter                               %
@@ -106,7 +107,7 @@ system.mfil      = Hf;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 options = optimset('Display','off','TolX',1e-3);
-funmax = @(Ps_dBm) -par_fssfm_snr(Ps_dBm,ch,dsp,sig,t_sig,ampli,system,essfm);
+funmax = @(Ps_dBm) -par_fssfm_snr(Ps_dBm,ch,dsp,sig,t_sig,ampli,system,fssfm);
 
 [P_max,max_snr] = fminbnd(funmax,range(1),range(2),options);
 max_snr = -max_snr;
