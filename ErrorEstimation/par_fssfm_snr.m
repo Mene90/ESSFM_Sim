@@ -21,7 +21,9 @@ ampli     = Ampliflat(Pavg,ch,ampli_par.G,ampli_par.e);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 options   = fssfm.opt;
 C0        = zeros(fssfm.NC,1);
-C0(1,1)   = 1;
+C0(1)     = 1;
+C0(2)     = 1;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                               TRAINING                                  %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -34,8 +36,8 @@ C0(1,1)   = 1;
         [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg,t_sig,ux,uy);
     end
     
-    fmin      = @(C) gpu_vec_fssfm_opt(t_sig,ux,uy,dsp,C,Nspan,Loss,Hf,fssfm.bw);
-    [C(1,:),err]=lsqnonlin(fmin,C0,[],[],options);
+    fmin      = @(X) gpu_vec_fssfm_opt(t_sig,ux,uy,dsp,Nspan,Loss,Hf,X);
+    [C(:,1),err]=lsqnonlin(fmin,C0,[],[],options);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -55,10 +57,10 @@ sig_enh_rx = copy(sig);
 
 if(dsp.nstep>1)
     for i = 1:Nspan
-       [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh,Nspan,fssfm.bw);
+       [ux_enh, uy_enh]   = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,sig_enh_rx,C(1),ux_enh,uy_enh,Nspan,C(2));
     end
 else  
-    [ux_enh, uy_enh]      = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,sig_enh_rx,C(1,:)',ux_enh,uy_enh,Nspan,fssfm.bw);
+    [ux_enh, uy_enh]      = dsp.DBP_gpu_vec_filssfm_optimized(Pavg*Loss,sig_enh_rx,C(1),ux_enh,uy_enh,Nspan,C(2));
 end
 
 set(sig_enh_rx,'FIELDX',gather(ux_enh));

@@ -1,10 +1,12 @@
-function [ f ] = gpu_vec_fssfm_opt( sig,ux,uy,dsp,C,Nspan,Loss,Hf,bw )
+function [ f ] = gpu_vec_fssfm_opt( sig,ux,uy,dsp,Nspan,Loss,Hf,X )
 %GPU_VEC_FSSFM_OPT Summary of this function goes here
 %   Detailed explanation goes here
         rx_sig     = copy(sig);
               
         NT      = get(rx_sig,'NT'       );
         Pavg    = get(rx_sig,'POWER'    );
+        C       = X(1);
+        bw      = X(2);
         
         if(dsp.nstep>1)
             for i = 1:Nspan

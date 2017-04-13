@@ -1,4 +1,4 @@
-function [ max_snr,P_max ] = FSSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,etasp,R,Nspan,range)
+function [ max_snr,P_max ] = FSSFM_MAX_SNR( Nstep,sym_length,n_prop_steps,etasp,R,Nspan,range,bw)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -80,7 +80,7 @@ set(t_sig,'FIELDY'   ,Modulator.ApplyModulation(E, 2*patmaty-1, t_sig, pls));
 
 fssfm.NC     = 1;
 fssfm.opt    = options;
-fssfm.bw     = 0.02;
+fssfm.bw     = bw;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                       SNR Matched filter                               %
