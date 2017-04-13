@@ -1,4 +1,4 @@
-function [ max_snr ] = DISPERSION_COMPENSATION_MAXSNR( Nstep,sym_length,n_prop_steps,R,etasp,Nspan)
+function [ max_snr ] = DISP_COMP_SNR( Nstep,sym_length,n_prop_steps,R,etasp,Nspan)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Global Signal parameters                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

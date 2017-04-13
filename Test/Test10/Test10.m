@@ -11,22 +11,22 @@ Nspan    = 40;
 
 NS  = [1,5,10,20,40,200,400]./Nspan;
 Nc  = [1,17,33,65];
-bw  = [0.02,0.04,0.06,0.08,0.12,0.2,0.2,0.2];
+% bw  = [0.02,0.04,0.06,0.08,0.12,0.2,0.2,0.2];
 
-tic
-for  j = 1:length(Nc)
-    nc = Nc(j);
-    parfor  i = 1:length(NS)
-        max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,etasp,symbrate,Nspan,[-8 8]);
-    end
-    print = ['ESSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',num2str(max_snr(:,j)'),'] dB ','NC = ',int2str(nc-1)];
-    disp(print);
-end
-toc
+% tic
+% for  j = 1:length(Nc)
+%     nc = Nc(j);
+%     parfor  i = 1:length(NS)
+%         max_snr(i,j) = ESSFM_MAX_SNR(NS(i),nc,symbols,n_prop_steps,etasp,symbrate,Nspan,[-8 8]);
+%     end
+%     print = ['ESSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',num2str(max_snr(:,j)'),'] dB ','NC = ',int2str(nc-1)];
+%     disp(print);
+% end
+% toc
 
 tic
 parfor  i = 1:length(NS)
-        ssfm_max_snr(i) = FSSFM_MAX_SNR(NS(i),symbols,n_prop_steps,etasp,symbrate,Nspan,[-8 8],bw(i));        
+        ssfm_max_snr(i) = FSSFM_MAX_SNR(NS(i),symbols,n_prop_steps,etasp,symbrate,Nspan,[-8 8]);        
 end
 print = ['FSSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',int2str(ssfm_max_snr),'] dB '];
 disp(print);
@@ -69,7 +69,7 @@ title(t);
 
 grid on;
 ylabel('SNR [dB]');
-xlabel('nï¿½ steps');
+xlabel('n° steps');
 
 legend(lgn)
 

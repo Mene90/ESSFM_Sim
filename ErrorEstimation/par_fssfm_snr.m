@@ -38,7 +38,7 @@ C0(2)     = 1;
     
     fmin      = @(X) gpu_vec_fssfm_opt(t_sig,ux,uy,dsp,Nspan,Loss,Hf,X);
     [C(:,1),err]=lsqnonlin(fmin,C0,[],[],options);
-
+     C(:,1)    
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      PROPAGATION                                        % 
@@ -98,7 +98,6 @@ snr_x = SNR(FIELDX_FSSFM_RX(1:sig.NT:end),FIELDX_TX);
 snr_y = SNR(FIELDY_FSSFM_RX(1:sig.NT:end),FIELDY_TX);
 
 avg_snr = 10*log10(0.5*(snr_x+snr_y));
-
 
 end
 

@@ -2,44 +2,48 @@
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^16];
-n_prop_steps = 100;
+n_prop_steps = [25,25,400];
 
-symbrate = 50;
+symbrate = [10 25 100];
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = [10:10:80];
 
 NS  = [1,2,3,4,5,6,7,8];
-Nc  = [65];
+Nc  = [65,65,97];
 
+delete(gcp('nocreate'));
+parpool(5);
 
-% for  k = 1:length(NS)
+ for  k = 1:length(symbrate)
     tic
-    
-%     parfor  i = 1:length(Nspan)
-%         max_snr(1,i) = ESSFM_MAX_SNR(NS(i)/Nspan(i),Nc,symbols,n_prop_steps,etasp,symbrate,Nspan(i),[-8 8]);
-%     end
+    nc = Nc(k);
+    prop_steps = n_prop_steps(k);
+    R          = symbrate(k);
+    parfor  i = 1:length(Nspan)
+        max_snr(1,i)           = ESSFM_MAX_SNR(NS(i)/Nspan(i),nc,symbols,prop_steps,etasp,R,Nspan(i),[-8 8]);
+        ssfm_max_snr(1,i)      = ESSFM_MAX_SNR(NS(i)/Nspan(i),1 ,symbols,prop_steps,etasp,R,Nspan(i),[-8 8]);
+        disp_comp_max_snr(1,i) = DISP_COMP_SNR(NS(i)/Nspan(i)   ,symbols,1,R,etasp,Nspan(i));
+    end
     
     print = ['ESSFM Nspan = [',int2str(Nspan),'] Max SNR = [',num2str(max_snr(1,:)),'] dB ','NS = [',int2str(NS),']'];
     disp(print);
-    
-    parfor i = 1:length(Nspan)
-        ssfm_max_snr(1,i) = ESSFM_MAX_SNR(NS(i)/Nspan(i),1,symbols,n_prop_steps,etasp,symbrate,Nspan(i),[-8 8]);
-    end
- 
-    print = ['SSFM  Nspan = [',int2str(Nspan),'] Max SNR = [',int2str(ssfm_max_snr(1,:)),'] dB NS = [',int2str(NS),']'];
+    print = ['SSFM  Nspan = [',int2str(Nspan),'] Max SNR = [',num2str(ssfm_max_snr(1,:)),'] dB NS = [',int2str(NS),']'];
     disp(print);
+    print = ['DISP NS = [',int2str(Nspan),'] Max SNR = [',num2str(disp_comp_max_snr(1,:)),'] dB '];
+    disp(print);  
       
     toc
     
-% end
+ end
+%     parfor i = 1:length(Nspan)
+%         ssfm_max_snr(1,i) = ESSFM_MAX_SNR(NS(i)/Nspan(i),1,symbols,n_prop_steps,etasp,symbrate,Nspan(i),[-8 8]);
+%     end
+%     parfor  i = 1:length(Nspan)
+%         disp_comp_max_snr(1,i) = DISPERSION_COMPENSATION_MAXSNR(NS(i)/Nspan(i),symbols,n_prop_steps,symbrate,etasp,Nspan(i));
+%     end
 
-parfor  i = 1:length(Nspan)
-    disp_comp_max_snr(1,i) = DISPERSION_COMPENSATION_MAXSNR(NS(i)/Nspan(i),symbols,n_prop_steps,symbrate,etasp,Nspan(i));
-end
 
-print = ['DISP NS = [',int2str(Nspan),'] Max SNR = [',int2str(disp_comp_max_snr(1,:)),'] dB '];
-disp(print);
 
 fig = figure(1);
 
