@@ -2,15 +2,15 @@
 % addpath('/home/menelaos/MATLAB/ESSFM_Sim/Test/Safe_Sim/');
 
 symbols      = [2^16];
-n_prop_steps = 50;
+n_prop_steps = [10,10,50,200,800];
 
-symbrate = 50;
+symbrate = [10,25,50,100,200];
 Fn       = [5];
 etasp    = [0.5 .*10.^(Fn/10)];
 Nspan    = 40;
 
 NS  = [1,5,10,20,40,200,400]./Nspan;
-Nc  = [1,17,33,65];
+Nc  = [1,9,17,33,65];
 % bw  = [0.02,0.04,0.06,0.08,0.12,0.2,0.2,0.2];
 
 % tic
@@ -23,12 +23,15 @@ Nc  = [1,17,33,65];
 %     disp(print);
 % end
 % toc
-
+for  k = 1:length(symbrate)
+    tic
+    prop_steps = n_prop_steps(k);
+    R          = symbrate(k);
 tic
 parfor  i = 1:length(NS)
-        ssfm_max_snr(i) = FSSFM_MAX_SNR(NS(i),symbols,n_prop_steps,etasp,symbrate,Nspan,[-8 8]);        
+        ssfm_max_snr(i) = FSSFM_MAX_SNR(NS(i),symbols,prop_steps,etasp,R,Nspan,[-8 8]);        
 end
-print = ['FSSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',int2str(ssfm_max_snr),'] dB '];
+print = ['FSSFM NS = [',int2str(NS.*Nspan),'] Max SNR = [',num2str(ssfm_max_snr),'] dB '];
 disp(print);
 toc
 
@@ -77,4 +80,4 @@ savefig(fig,strcat('plot/FSSFM_vs_ESSFM_', int2str(n_prop_steps),'_',int2str(sym
 
 hold('off')
 close(fig);
-
+end

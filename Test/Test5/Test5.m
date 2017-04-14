@@ -11,7 +11,7 @@ Nspan    = 40;
 % gamma    = 1.27e-3;
 
 NS  = [1,5,10,20,40,80,200,400]./Nspan;
-Nc  = [1,9,17,33,64];
+Nc  = [1,9,17,33,65];
 
 tic
 for  j = 1:length(Nc)
@@ -39,7 +39,7 @@ disp(print);
 toc
 
 
-fig = figure(j);
+fig = figure(1);
 
 lgn = [];
 
