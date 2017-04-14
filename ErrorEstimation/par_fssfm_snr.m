@@ -38,7 +38,8 @@ C0(2)     = 1;
     
     fmin      = @(X) gpu_vec_fssfm_opt(t_sig,ux,uy,dsp,Nspan,Loss,Hf,X);
     [C(:,1),err]=lsqnonlin(fmin,C0,[],[],options);
-     C(:,1)    
+     Ps_dBm
+     C(:,1)'    
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      PROPAGATION                                        % 
