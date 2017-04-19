@@ -22,7 +22,7 @@ ampli     = Ampliflat(Pavg,ch,ampli_par.G,ampli_par.e);
 options   = fssfm.opt;
 C0        = zeros(fssfm.NC,1);
 C0(1)     = 1;
-C0(2)     = 1;
+C0(2)     = 0.01;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                               TRAINING                                  %
@@ -38,8 +38,8 @@ C0(2)     = 1;
     
     fmin      = @(X) gpu_vec_fssfm_opt(t_sig,ux,uy,dsp,Nspan,Loss,Hf,X);
     [C(:,1),err]=lsqnonlin(fmin,C0,[],[],options);
-     Ps_dBm
-     C(:,1)'    
+    
+%     [Ps_dBm, C(:,1)']    
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      PROPAGATION                                        % 
