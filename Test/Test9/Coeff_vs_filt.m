@@ -83,10 +83,9 @@ C0        = zeros(NC,1);
 C0(1,1)   = 1;
 Loss      = 10^(-Gerbio*0.1);
 
-options = optimset('Algorithm','trust-region-reflective','Display','iter',...
+options = optimset('Algorithm','trust-region-reflective','Display','off',...
     'Jacobian','off','DerivativeCheck','off','TolFun',1e-13,'TolX',1e-13,'MaxFunEvals',10000*length(C0));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-bw = 0.02;
 seedx = 1;
 seedy = sig.NSYMB/2^3;      
     dsp       = DSP(ch,Ns_bprop);
@@ -127,24 +126,48 @@ Coeff.'
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % C = gpuArray(Coeff);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                      Trainin Signal parameters                         %
+%                         Pulse parameters                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Nsymb     = sym_length;                % number of symbols
-Nt        = 2;                         % points x symbol
-nfft      = Nsymb * Nt;
+Ps_dBm   = dBm;                    % Power vector            [dBm]
+Pavg     = 10.^(0.1*(Ps_dBm-30));     % total transmitted power [W]
+Plen     = length(Ps_dBm);
 
-sig       = Signal(Nsymb,Nt,symbrate);
-
+pls.shape   = 'RRC';
+pls.bw      = 1.0;                       % duty cycle
+pls.ord     = 0.1;                         % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Hf_BER        = transpose(filt(pls,sig.FN));
-
+Hf       = gpuArray(transpose(filt(pls,sig.FN)));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                         ESSFM PARAMETERS                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+options   = optimset('Algorithm','trust-region-reflective','Display','off',...
+    'Jacobian','off','DerivativeCheck','off','TolFun',1e-13,'TolX',1e-13);
+C0(1)     = 1;
+C0(2)     = 0.1;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                               TRAINING                                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    ux = gpuArray(complex(get(sig,'FIELDX')));
+    uy = gpuArray(complex(get(sig,'FIELDY')));
+    
+    for i = 1:Nspan
+        [ux, uy]      = ch.gpu_vectorial_ssfm(Pavg(1),sig,ux,uy);
+        [ux, uy]      = ampli.gpu_AddNoise(sig,ux,uy);
+    end
+    
+    fmin      = @(X) gpu_vec_fssfm_opt(sig,ux,uy,dsp,Nspan,Loss,Hf,X);
+    [C(:,1),err]=lsqnonlin(fmin,C0,[],[],options);
+
+     
+     
 gpls.shape = 'gauss';
 gpls.ord   = 2;
-gpls.bw    = bw;
+gpls.bw    = C(2);
 H = ifft(transpose(filt(gpls,sig.FN)));
 Hf = [H(length(H)-(length(Coeff)-2):end);H(1:length(Coeff))];
 CC = [flipud(Coeff);Coeff(2:end)];
