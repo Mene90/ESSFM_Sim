@@ -1,7 +1,0 @@
-function [ max_snr,P_max ] = SSFM_MAX_SNR( Nstep,size_length,n_prop_steps,etasp,gamma,R,Nspan)
-options = optimset('Display','off','TolX',3e-1);
-funmax = @(dBm) -par_snr(Nstep,dBm,size_length,n_prop_steps,etasp,gamma,R,Nspan);
-[P_max,max_snr] = fminbnd(funmax,-4,10,options);
-max_snr = -max_snr;
-end
-

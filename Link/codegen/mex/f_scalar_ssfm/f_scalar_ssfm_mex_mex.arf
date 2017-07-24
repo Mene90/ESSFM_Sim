@@ -1,7 +1,0 @@
-libemlrt.lib
-libcovrt.lib
-libut.lib
-libmwmathutil.lib
-libiomp5md.lib
-/export:mexFunction
-/export:emlrtMexFcnProperties
