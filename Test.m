@@ -10,15 +10,15 @@ switch n
         
         distribution = input('Enter a distribution: ');
         
-        link.Nspan       = 30;
-        link.LL          = 1.6e5;
+        link.Nspan       = 80;
+        link.LL          = 0.8e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
-        link.sprop       = 25;
+        link.sprop       = 20;
         
         sp.bprop    = 1/link.Nspan;
         
-        amp.etasp   = 2.5;
+        amp.etasp   = 2.3;
         amp.Fn      = 10*log10(2*amp.etasp);
         
         al =link.attenuation*0.230258509299405*1e-3;
@@ -26,7 +26,7 @@ switch n
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
 
         signal_prop.nsymb    = 2^20;
-        signal_prop.symbrate = 20;
+        signal_prop.symbrate = 50;
                 
 %         SNR_dB   = (-10:10:60);
 %         pdbm     = 30+10*log10(signal_prop.symbrate*10^9*N0*10.^(SNR_dB*0.1));
