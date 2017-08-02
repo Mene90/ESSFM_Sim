@@ -1,4 +1,4 @@
-function [ signals,SNRdB,ch ] = TestZeroDisp( link,sp,signal,amp,pdbm )
+function [ signals,SNRdB,ch ] = TestZeroDisp( link,sp,signal,amp,pdbm,distribution )
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,7 +36,13 @@ Gerbio    = alphadB*LL*1e-3;
 etasp     = amp.etasp;
 ampli     = Ampliflat(Pavg,ch,Gerbio,etasp);
 
-[cmapx_tx] = Pattern.gaussian(Nsymb);
+if(distribution == 'HG')
+    [cmapx_tx] = Pattern.halfgaussian(Nsymb);
+    %     [cmapy_tx] = Pattern.halfgaussian(Nsymb);
+elseif(distribution == 'G')
+    [cmapx_tx] = Pattern.gaussian(Nsymb);
+    %     [cmapy_tx] = Pattern.gaussian(Nsymb);
+end
 
 E      = Laser.GetLaserSource(Pavg, sig,lambda,0);
 

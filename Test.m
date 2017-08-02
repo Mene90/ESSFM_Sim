@@ -11,14 +11,14 @@ switch n
 %         distribution = input('Enter a distribution: ');
         Nspan            = [80,90,100,110,120];  
         link.Nspan       = Nspan(1);
-        link.LL          = 0.8e5;
+        link.LL          = 1.2e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
         link.sprop       = 5;
         
         sp.bprop    = 1/link.Nspan;
         
-        amp.etasp   = 2.4;
+        amp.etasp   = 2;
         amp.Fn      = 10*log10(2*amp.etasp);
         
         al =link.attenuation*0.230258509299405*1e-3;
@@ -92,7 +92,8 @@ switch n
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
         
     case 3
-
+        
+        distribution     = input('Enter a distribution: ');
         link.Nspan       = 10;
         link.LL          = 1e5;
         link.attenuation = 0.2;
@@ -108,7 +109,7 @@ switch n
         Gm1=(exp(al*link.LL)-1.d0);
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
 
-        signal_prop.nsymb    = 2^18;
+        signal_prop.nsymb    = 2^20;
         signal_prop.symbrate = 50;
                 
 %         SNR_dB   = (-10:10:60);
@@ -121,7 +122,7 @@ switch n
         SNR_dB  =   10*log10(SNR);
         
         for i=1:length(pdbm)
-             [signals{i},SNRdB{i},ch] = TestZeroDisp(link,sp,signal_prop,amp,pdbm(i));
+             [signals{i},SNRdB{i},ch] = TestZeraoDisp(link,sp,signal_prop,amp,pdbm(i),distribution);
         end
         
         ch_properties       = ch.getProperties;
