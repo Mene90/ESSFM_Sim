@@ -30,7 +30,7 @@ Pavg     = 10.^(0.1*(Ps_dBm -30));     % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
 Nt       = 10;                        % points x symbol
-sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
+sig      = Signal(Nsymb,Nt,symbrate,lambda,5);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Pulse parameters                               %
@@ -71,26 +71,22 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
         [cmapx(:,ii)] = Pattern.gaussian(Nsymb);        
         Eoptx(:,ii)   = Modulator.ApplyModulation(E,cmapx(:,ii),sig,pls);
     end
-    
     set(sig,'FIELDX_TX',cmapx);
     MuxDemux.Mux(Eoptx,[],sig);
     
     gpu_propagation(ch,Nspan,ampli,sig);
     [zfieldx] = MuxDemux.Demux(sig,oHf);
-    
-    set(sig,'FIELDX',zfieldx(:,2));
-    set(sig,'FIELDX_TX',sig.FIELDX_TX(:,3));
+    set(sig,'FIELDX',zfieldx(:,3));
     
     dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
-    
     dsp.matchedfilter(sig,Hf);
-    dsp.downsampling(sig);    
+    set(sig,'FIELDX_TX',sig.FIELDX_TX(:,3));
     dsp.nlpnmitigation(sig);
-%     
-%     avgber       = ErrorEstimation.BER(sig);
+    
+    avgber       = ErrorEstimation.BER(sig);
     signals      = sig.getproperties();
     SNRdB        = 10*log10(1/symbrate/10^9/ampli.N0/Nspan);
-%     sig          = Signal(Nsymb,Nt,symbrate,lambda,5); 
+    sig          = Signal(Nsymb,Nt,symbrate,lambda,5); 
     
 end
 end

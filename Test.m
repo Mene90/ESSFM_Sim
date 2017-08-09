@@ -94,7 +94,8 @@ switch n
     case 3
         
         distribution     = input('Enter a distribution: ');
-        link.Nspan       = 10;
+        Nspan            = [5,10,15,20];  
+        link.Nspan       = Nspan(1);
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
@@ -102,7 +103,7 @@ switch n
         
         sp.bprop    = 5;
         
-        amp.etasp   = 2;
+        amp.etasp   = 1.76;
         amp.Fn      = 10*log10(2*amp.etasp);
         
         al =link.attenuation*0.230258509299405*1e-3;
@@ -120,15 +121,52 @@ switch n
         SNR     =   P/signal_prop.symbrate/10^9/N0;
         C       =   log2(1+SNR);
         SNR_dB  =   10*log10(SNR);
+        for j = 1:length(Nspan)
+            link.Nspan = Nspan(j);
+            for i=1:length(pdbm)
+                [signals{i},SNRdB{i},ch] = TestZeroDisp(link,sp,signal_prop,amp,pdbm(i),distribution);
+            end
+            
+            ch_properties       = ch.getProperties;
+            ch_properties.Nspan = link.Nspan;
+            
+            savefile        = strcat(distribution,'_ZeroDisp_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_NoDBP');
+            
+            save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
+        end
+        
+    case 4
+        
+        link.Nspan       = 10;
+        link.LL          = 1e5;
+        link.attenuation = 0.2;
+        link.lambda      = 1550;
+        link.sprop       = 100;
+        link.nlindex     = 2.5e-20;
+        link.disp        = 17;
+        
+        sp.bprop    = link.sprop;
+        
+        amp.etasp   = 1;
+        amp.Fn      = 10*log10(2*amp.etasp);
+        
+        al =link.attenuation*0.230258509299405*1e-3;
+        Gm1=(exp(al*link.LL)-1.d0);
+        N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
+        
+        pdbm                 = (-15:5:10);
+        signal_prop.nc       = 3;
+        signal_prop.nsymb    = 2^22;
+        signal_prop.symbrate = 50;     
         
         for i=1:length(pdbm)
-             [signals{i},SNRdB{i},ch] = TestZeraoDisp(link,sp,signal_prop,amp,pdbm(i),distribution);
+            [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i));
         end
         
         ch_properties       = ch.getProperties;
         ch_properties.Nspan = link.Nspan;
     
-        savefile        = strcat('ZeroDisp_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_NoDBP');
+        savefile        = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'ch');
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
         

@@ -31,7 +31,7 @@ classdef MuxDemux
             lamc = 2*maxl*minl/(maxl+minl);                    % central wavelength: 1/lamc = 0.5(1/maxl+1/minl)
             deltafn = CLIGHT*(1/lamc-1./lamt);                 % absolute frequency spacing [GHz]
             minfreq = sig.FN(2)-sig.FN(1);                     % minfreq = 1/sig.NSYMB
-            ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);     % spacing in points
+            ndfn = ceil(deltafn./sig.SYMBOLRATE/minfreq);     % spacing in points
             
             zfieldx = fft(Ex);
             
@@ -57,7 +57,7 @@ classdef MuxDemux
             minl=min(sig.LAMBDA);
             lamc = 2*maxl*minl/(maxl+minl);                  % central wavelength
             deltafn = CLIGHT*(1/lamc-1./sig.LAMBDA);         % frequency spacing
-            ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);   % spacing in points
+            ndfn = ceil(deltafn./sig.SYMBOLRATE/minfreq);   % spacing in points
             
             sig.FIELDX = fft(sig.FIELDX);
             sig.FIELDY = fft(sig.FIELDY);

@@ -110,11 +110,14 @@ classdef DSP < handle & matlab.mixin.SetGet
             set(sig,'FIELDY', ifft(fft(sig.FIELDY).*Hf));
         end
         
-        function nlpnmitigation(~,sig) 
+        function downsampling(~,sig)
             if(size(sig.FIELDX,1) == size(sig.FIELDX_TX,1)*sig.NT)
                 set(sig,'FIELDX',sig.FIELDX(1:sig.NT:end));
                 set(sig,'FIELDY',sig.FIELDY(1:sig.NT:end));
             end
+        end        
+        
+        function nlpnmitigation(~,sig) 
             
             rotx = angle(mean(sig.FIELDX.*conj(get(sig,'FIELDX_TX'))));
             roty = angle(mean(sig.FIELDY.*conj(get(sig,'FIELDY_TX'))));
