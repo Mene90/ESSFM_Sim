@@ -29,7 +29,7 @@ Ps_dBm   = pdbm;                      % Power vector            [dBm]
 Pavg     = 10.^(0.1*(Ps_dBm -30));     % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
-Nt       = 10;                        % points x symbol
+Nt       = 2;                         % points x symbol
 sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

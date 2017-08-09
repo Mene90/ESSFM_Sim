@@ -141,7 +141,7 @@ switch n
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
-        link.sprop       = 100;
+        link.sprop       = 50;
         link.nlindex     = 2.5e-20;
         link.disp        = 17;
         
@@ -156,7 +156,7 @@ switch n
         
         pdbm                 = (-15:5:10);
         signal_prop.nc       = 3;
-        signal_prop.nsymb    = 2^22;
+        signal_prop.nsymb    = 2^20;
         signal_prop.symbrate = 50;     
         
         for i=1:length(pdbm)
