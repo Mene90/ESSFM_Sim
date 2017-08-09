@@ -93,4 +93,3 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
 %     sig          = Signal(Nsymb,Nt,symbrate,lambda,5); 
     
 end
-end
