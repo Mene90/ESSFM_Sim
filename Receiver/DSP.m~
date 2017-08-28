@@ -97,9 +97,9 @@ classdef DSP < handle & matlab.mixin.SetGet
                     ssfm(dsp,sig,xi,Nspan,0.*betaz,r);
                 end
             elseif strcmpi(type,'ssfm_nononlin')
-                xi = 0.*xi;
+                xi = 0
                 for i=1:fiberpartion
-                    ssfm(dsp,sig,xi,Nspan,betaz,r);
+                    ssfm(dsp,sig,0.*xi,Nspan,betaz,r);
                 end
             elseif strcmpi(type,'essfm')
                 for i=1:fiberpartion
@@ -140,7 +140,7 @@ classdef DSP < handle & matlab.mixin.SetGet
     
     methods (Access = private)   
        
-        function ssfm(dsp,sig,xi,Nspan,betaz,r)    
+        function ssfm(dsp,sig,xi,Nspan,betaz)    
             steps = dsp.nstep;
             if(dsp.nstep < 1)
                 steps = Nspan * dsp.ch.Lf/dsp.dz;

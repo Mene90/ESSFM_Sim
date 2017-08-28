@@ -52,7 +52,7 @@ set(sig,'FIELDX_TX' ,cmapx_tx);
 %      set(sig,'FIELDY_TX' ,cmapy_tx);
 
 gpu_propagation(ch,Nspan,ampli,sig);
-backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm_nononlin');
+backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm_nodisp');
 signals = sig.getproperties();
 
 SNRdB  = 10*log10(1/symbrate/10^9/ampli.N0/Nspan);
