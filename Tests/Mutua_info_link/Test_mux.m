@@ -5,7 +5,7 @@ function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm)
 LL        = link.LL;              % length [m]
 alphadB   = link.attenuation;     % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
-n2        = link.nlindex;     % nonlinear index [m^2/W]
+n2        = link.nlindex;         % nonlinear index [m^2/W]
 lambda    = link.lambda;          % wavelength [nm] @ dispersion
 D         = link.disp;             % dispersion [ps/nm/km] @ wavelength
 S         = 0;                    % slope [ps/nm^2/km] @ wavelength
@@ -26,10 +26,10 @@ dsp      = DSP(ch,Ns_bprop);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 symbrate = signal.symbrate;           % symbol rate             [Gbaud]
 Ps_dBm   = pdbm;                      % Power vector            [dBm]
-Pavg     = 10.^(0.1*(Ps_dBm -30));     % Power vector            [W]
+Pavg     = 10.^(0.1*(Ps_dBm -30));    % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
-Nt       = 2;                         % points x symbol
+Nt       = signal.nc;                 % points x symbol
 sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,12 +37,12 @@ sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pls.shape   = 'RRC';                     % Shape type
 pls.bw      = 1.0;                       % duty cycle
-pls.ord     = 0.2;                       % pulse roll-off
+pls.ord     = 0;                         % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         optical filter parameters                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 oftype = 'ideal'; % optical filter type
-obw    = 2.5;     % optical filter bandwidth 
+obw    = 2;       % optical filter bandwidth 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Amplifier parameters                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -65,7 +65,7 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
     set(sig,'POWER',Pavg);
     
     ampli  = Ampliflat(Pavg,ch,Gerbio,etasp);
-    E     = Laser.GetLaserSource(Pavg,sig,lambda,0.1);
+    E      = Laser.GetLaserSource(Pavg,sig,lambda,0.4007);
     
     for ii = 1:sig.NCH
         [cmapx(:,ii)] = Pattern.gaussian(Nsymb);        
@@ -79,7 +79,7 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
     [zfieldx] = MuxDemux.Demux(sig,oHf);
     
     set(sig,'FIELDX',zfieldx(:,2));
-    set(sig,'FIELDX_TX',sig.FIELDX_TX(:,3));
+    set(sig,'FIELDX_TX',sig.FIELDX_TX(:,2));
     
     dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
     
@@ -87,7 +87,7 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
     dsp.downsampling(sig);    
     dsp.nlpnmitigation(sig);
 %     
-%     avgber       = ErrorEstimation.BER(sig);
+    avgber       = ErrorEstimation.BER(sig);
     signals      = sig.getproperties();
     SNRdB        = 10*log10(1/symbrate/10^9/ampli.N0/Nspan);
 %     sig          = Signal(Nsymb,Nt,symbrate,lambda,5); 

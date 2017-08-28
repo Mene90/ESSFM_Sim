@@ -16,8 +16,8 @@ elseif strcmp(pls.shape, 'gauss')
 elseif strcmp(pls.shape,'RC')
     fn=f/pls.bw;    %frequenza normalizzata alla banda
     ro=pls.ord;     %roll-off
-    H=ones(1,length(fn));
-    ind=find(abs(fn)>0.5*(1-ro))&(abs(fn)<0.5*(1+ro));
+    H=ones(length(fn),1);
+    ind=find((abs(fn)>0.5*(1-ro))&(abs(fn)<0.5*(1+ro)));
     H(ind)=0.5*(1+cos(pi/ro*(abs(fn(ind))-0.5*(1-ro))));
     H(abs(fn)>=0.5*(1+ro))=0;
 elseif strcmp(pls.shape,'RRC')
