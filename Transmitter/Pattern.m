@@ -29,6 +29,12 @@ classdef Pattern
             bmap=bmap';
             
         end
+        
+        function [cmap]          =   qam64(nsymbols)
+                I = datasample([-1,-3,-5,-7,1,3,5,7],nsymbols);
+                Q = datasample([-1,-3,-5,-7,1,3,5,7],nsymbols);
+                cmap = 1./sqrt(42)*(I'+1i.*Q');
+        end
                 
         function [cmap,pat,bmap] = random(alphabet_size,nsymbols)        
             pat  = floor(alphabet_size.*rand(1,nsymbols));
