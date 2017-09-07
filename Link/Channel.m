@@ -1,4 +1,4 @@
-classdef Channel
+classdef Channel < matlab.mixin.SetGet
       
         properties
         nstep       % number of step per spam

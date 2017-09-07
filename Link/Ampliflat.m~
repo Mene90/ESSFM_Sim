@@ -11,17 +11,15 @@ classdef Ampliflat
     
     methods
         
-        function amp = Ampliflat(Pavg,ch,G,etasp,type)
+        function amp = Ampliflat(Pavg,ch,G,etasp)
           
-          if (type == 'Raman')            
-            ktusual     = etasp;
-            amp.N0      = ch.Lf*ch.alphalin*amp.HPLANCK*amp.CLIGHT/(ch.lambda * 1e-9)*ktusual/Pavg;
-            ch.alphadB  = 0;
-            ch.alphalin = 0;              
-          else              
-            Gm1     = (10^(G*0.1)-1.d0);                              % (G-1)            
+          if (type == 'EDFA')
+            Gm1     = (10^(G*0.1)-1.d0);                              % (G-1)
             amp.N0  = etasp*(Gm1)*amp.HPLANCK*amp.CLIGHT...
-                        /(ch.lambda * 1e-9)/Pavg;          
+                        /(ch.lambda * 1e-9)/Pavg;
+          else
+            ktusual = 2;
+            amp.N0  = ch.alphalin*amp.HPLANCK*amp.CLIGHT/(ch.lambda * 1e-9)*ktusual
           end
             
 %             N0=Gm1*obj.HPLANCK*obj.CLIGHT/(ch.lambda * 1e-9)*etasp;  % Accumulate ASE Noise PSD

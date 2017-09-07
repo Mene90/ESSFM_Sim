@@ -28,8 +28,8 @@ classdef MuxDemux
                 end
             end
             
-            lamc = round(2*maxl*minl/(maxl+minl));                    % central wavelength: 1/lamc = 0.5(1/maxl+1/minl)
-            deltafn = round(CLIGHT*(1/lamc-1./lamt));                 % absolute frequency spacing [GHz]
+            lamc = round(2*maxl*minl/(maxl+minl));             % central wavelength: 1/lamc = 0.5(1/maxl+1/minl)
+            deltafn = round(CLIGHT*(1/lamc-1./lamt));          % absolute frequency spacing [GHz]
             minfreq = sig.FN(2)-sig.FN(1);                     % minfreq = 1/sig.NSYMB
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);     % spacing in points
             
@@ -50,26 +50,29 @@ classdef MuxDemux
             end            
         end
         
-        function [zfieldx,zfieldy] = Demux (sig,Hf)
+        function [zfieldx,zfieldy] = Demux (sig,Hf,kch)
             CLIGHT = 299792458;
             minfreq = sig.FN(2)-sig.FN(1);
             maxl=max(sig.LAMBDA);
             minl=min(sig.LAMBDA);
             lamc = round(2*maxl*minl/(maxl+minl));                   % central wavelength
             deltafn = round(CLIGHT*(1/lamc-1./sig.LAMBDA));          % frequency spacing
-            ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);    % spacing in points
+            ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);           % spacing in points
             
             sig.FIELDX = fft(sig.FIELDX);
             sig.FIELDY = fft(sig.FIELDY);
             
-            for kch=1:sig.NCH    % create the unique field combining the channels
-                zfieldx(:,kch) = fastshift(sig.FIELDX,ndfn(kch));
-                zfieldx(:,kch) = ifft(zfieldx(:,kch) .* Hf);
-                if any(sig.FIELDY)
-                    zfieldy(:,kch) = fastshift(sig.FIELDY,ndfn(kch));
-                    zfieldy(:,kch) = ifft(zfieldy(:,kch) .* Hf);
-                end
-            end
+%             for kch=1:sig.NCH    % create the unique field combining the channels
+%                 zfieldx(:,kch) = fastshift(sig.FIELDX,ndfn(kch));
+%                 zfieldx(:,kch) = ifft(zfieldx(:,kch) .* Hf);
+%                 if any(sig.FIELDY)
+%                     zfieldy(:,kch) = fastshift(sig.FIELDY,ndfn(kch));
+%                     zfieldy(:,kch) = ifft(zfieldy(:,kch) .* Hf);
+%                 end
+%             end
+
+            zfieldx(:,1) = fastshift(sig.FIELDX,ndfn(kch));
+            zfieldx(:,1) = ifft(zfieldx(:,1) .* Hf);
                         
         end
     

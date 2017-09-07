@@ -92,11 +92,11 @@ classdef DSP < handle & matlab.mixin.SetGet
                 for i=1:fiberpartion
                     ssfm(dsp,sig,xi,Nspan,betaz,r);
                 end
-            elseif strcmpi(type,'ssfm_nodisp')
+            elseif strcmpi(type,'ssfm_onlykercomp')
                 for i=1:fiberpartion
                     ssfm(dsp,sig,xi,Nspan,0.*betaz,r);
                 end
-            elseif strcmpi(type,'ssfm_nononlin')
+            elseif strcmpi(type,'ssfm_onlydispcomp')
                 xi = 0.*xi;
                 for i=1:fiberpartion
                     ssfm(dsp,sig,xi,Nspan,betaz,r);
@@ -202,11 +202,12 @@ classdef DSP < handle & matlab.mixin.SetGet
         end
         
         function nl_ssfm_step(~,xi,sig)  
-            if not(any(xi == 0))
-                pow = abs(sig.FIELDX).^2 + abs(sig.FIELDY).^2;
-                set(sig,'FIELDX', sig.FIELDX.*exp(1i*xi.*pow));
-                set(sig,'FIELDY', sig.FIELDY.*exp(1i*xi.*pow));
-            end
+                if (not(xi==0))
+                    pow = abs(sig.FIELDX).^2 + abs(sig.FIELDY).^2;
+                    set(sig,'FIELDX', sig.FIELDX.*exp(1i*xi.*pow));
+                    set(sig,'FIELDY', sig.FIELDY.*exp(1i*xi.*pow));
+                end
+            
         end
         
         function nl_essfm_step(~,C,sig)            
@@ -229,10 +230,10 @@ classdef DSP < handle & matlab.mixin.SetGet
         end
         
         function lin_step(~,betaxdz,sig)  
-            if not(any(betaxdz == 0))
-                set(sig,'FIELDX',ifft( fft(sig.FIELDX).* exp(-1i*betaxdz)));
-                set(sig,'FIELDY',ifft( fft(sig.FIELDY).* exp(-1i*betaxdz)));
-            end
+                if (not(all(betaxdz==0)))
+                    set(sig,'FIELDX',ifft( fft(sig.FIELDX).* exp(-1i*betaxdz)));
+                    set(sig,'FIELDY',ifft( fft(sig.FIELDY).* exp(-1i*betaxdz)));
+                end
         end
         
     end

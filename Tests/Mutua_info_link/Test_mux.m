@@ -7,7 +7,7 @@ alphadB   = link.attenuation;     % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
 n2        = link.nlindex;         % nonlinear index [m^2/W]
 lambda    = link.lambda;          % wavelength [nm] @ dispersion
-D         = link.disp;             % dispersion [ps/nm/km] @ wavelength
+D         = link.disp;            % dispersion [ps/nm/km] @ wavelength
 S         = 0;                    % slope [ps/nm^2/km] @ wavelength
 
 Ns_prop   = link.sprop;           % number of SSFM propagation step
@@ -29,7 +29,7 @@ Ps_dBm   = pdbm;                      % Power vector            [dBm]
 Pavg     = 10.^(0.1*(Ps_dBm -30));    % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
-Nt       = signal.nc;                 % points x symbol
+Nt       = signal.nt;                      % points x symbol
 sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,12 +42,13 @@ pls.ord     = 0;                         % pulse roll-off
 %                         optical filter parameters                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 oftype = 'ideal'; % optical filter type
-obw    = 2;       % optical filter bandwidth 
+obw    = 2;     % optical filter bandwidth 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Amplifier parameters                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Gerbio    = alphadB*LL*1e-3;
 etasp     = amp.etasp;
+amptype   = amp.type;
 % ampli     = Ampliflat(Pavg,ch,Gerbio,etasp);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                             %
@@ -64,8 +65,8 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
        
     set(sig,'POWER',Pavg);
     
-    ampli  = Ampliflat(Pavg,ch,Gerbio,etasp);
-    E      = Laser.GetLaserSource(Pavg,sig,lambda,0.4007);
+    ampli  = Ampliflat(Pavg,ch,Gerbio,etasp,amptype);
+    E      = Laser.GetLaserSource(Pavg,sig,lambda,0.4009);
     
     for ii = 1:sig.NCH
         [cmapx(:,ii)] = Pattern.gaussian(Nsymb);        
@@ -76,12 +77,15 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
     MuxDemux.Mux(Eoptx,[],sig);
     
     gpu_propagation(ch,Nspan,ampli,sig);
-    [zfieldx] = MuxDemux.Demux(sig,oHf);
+    [zfieldx] = MuxDemux.Demux(sig,Hf,2);
     
-    set(sig,'FIELDX',zfieldx(:,2));
+    set(sig,'FIELDX',zfieldx(:,1));
     set(sig,'FIELDX_TX',sig.FIELDX_TX(:,2));
-    
-    dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
+    if (amptype == 'Raman')
+        dsp.backpropagation(Pavg,sig,Nspan,'ssfm');
+    else
+        dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
+    end
     
     dsp.matchedfilter(sig,Hf);
     dsp.downsampling(sig);    

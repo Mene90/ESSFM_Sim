@@ -94,23 +94,25 @@ switch n
     case 3
         
         distribution     = input('Enter a distribution: ');
+        compensation     = 'inline';%'ssfm_onlykercomp''ssfm_onlydispcomp'
         Nspan            = [10];  
         link.Nspan       = Nspan(1);
         link.LL          = 1e5;
         link.attenuation = 0.2;
+        link.disp        = 17;
         link.lambda      = 1550;
-        link.sprop       = 10;
+        link.sprop       = 20;
         
         sp.bprop    = 2;
         
         amp.etasp   = 2;
         amp.Fn      = 10*log10(2*amp.etasp);
         
-        al =link.attenuation*0.230258509299405*1e-3;
-        Gm1=(exp(al*link.LL)-1.d0);
-        N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
+        al  = link.attenuation*0.230258509299405*1e-3;
+        Gm1 = (exp(al*link.LL)-1.d0);
+        N0  = link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
 
-        signal_prop.nsymb    = 2^18;
+        signal_prop.nsymb    = 2^19;
         signal_prop.symbrate = 10;
                 
 %         SNR_dB   = (-10:10:60);
@@ -124,20 +126,20 @@ switch n
         for j = 1:length(Nspan)
             link.Nspan = Nspan(j);
             for i=1:length(pdbm)
-                [signals{i},SNRdB{i},ch] = TestZeroDisp(link,sp,signal_prop,amp,pdbm(i),distribution);
+                [signals{i},SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation);
             end
             
             ch_properties       = ch.getProperties;
             ch_properties.Nspan = link.Nspan;
             
-            savefile        = strcat(distribution,'_ZeroDisp_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_NoDBP');
+            savefile        = strcat(distribution,'_InlineDispComp_',int2str(link.LL/1000),'X',int2str(link.Nspan));
             
             save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','-v7.3');
         end
         
     case 4
         
-        link.Nspan       = 20;
+        link.Nspan       = 10;
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
@@ -147,16 +149,18 @@ switch n
         
         sp.bprop    = link.sprop;
         
-        amp.etasp   = 2;
+        amp.type    = 'Raman';
+        amp.etasp   = 1;
         amp.Fn      = 10*log10(2*amp.etasp);
         
         al =link.attenuation*0.230258509299405*1e-3;
         Gm1=(exp(al*link.LL)-1.d0);
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        pdbm                 = (-15:5:10);
-        signal_prop.nc       = 2;
-        signal_prop.nsymb    = 2^18;
+        pdbm                 = [-15,-10,-5,-3,-1,0,1,3,5,10];
+        signal_prop.nt       = 3;
+        signal_prop.nc       = 3;
+        signal_prop.nsymb    = 2^19;
         signal_prop.symbrate = 50;     
         
         for i=1:length(pdbm)
@@ -166,7 +170,7 @@ switch n
         ch_properties       = ch.getProperties;
         ch_properties.Nspan = link.Nspan;
     
-        savefile        = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'NNLPN_ch');
+        savefile        = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'RamanAmp');
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
         
