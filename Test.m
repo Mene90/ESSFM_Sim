@@ -157,7 +157,7 @@ switch n
         Gm1=(exp(al*link.LL)-1.d0);
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        pdbm                 = [-15,-10,-5,-3,-1,0,1,3,5,10];
+        pdbm                 = (-15:1:-3);%[-15,-10,-5,-3,-1,0,1,3,5,10];
         signal_prop.nt       = 3;
         signal_prop.nc       = 3;
         signal_prop.nsymb    = 2^19;

@@ -81,7 +81,8 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
     
     set(sig,'FIELDX',zfieldx(:,1));
     set(sig,'FIELDX_TX',sig.FIELDX_TX(:,2));
-    if (amptype == 'Raman')
+    
+    if (strcmp(amptype,'Raman'))
         dsp.backpropagation(Pavg,sig,Nspan,'ssfm');
     else
         dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');

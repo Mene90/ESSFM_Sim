@@ -13,7 +13,7 @@ classdef Ampliflat
         
         function amp = Ampliflat(Pavg,ch,G,etasp,type)
           
-          if (type == 'Raman')            
+          if (strcmp(type,'Raman'))            
             ktusual     = etasp;
             amp.N0      = ch.Lf*ch.alphalin*amp.HPLANCK*amp.CLIGHT/(ch.lambda * 1e-9)*ktusual/Pavg;
             ch.alphadB  = 0;
