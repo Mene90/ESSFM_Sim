@@ -157,10 +157,10 @@ switch n
         Gm1=(exp(al*link.LL)-1.d0);
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        pdbm                 = (-15:1:-3);%[-15,-10,-5,-3,-1,0,1,3,5,10];
+        pdbm                 = (-15:1:-5);%[-15,-10,-5,-3,-1,0,1,3,5,10];
         signal_prop.nt       = 3;
         signal_prop.nc       = 3;
-        signal_prop.nsymb    = 2^19;
+        signal_prop.nsymb    = 2^14;
         signal_prop.symbrate = 50;     
         
         for i=1:length(pdbm)
@@ -169,7 +169,17 @@ switch n
         
         ch_properties       = ch.getProperties;
         ch_properties.Nspan = link.Nspan;
-    
+      
+        
+        for i =1:length(pdbm)
+            irate(i) = AIR(signals{i},'Gaussian');
+        end
+        
+        ylabel('IR [bit/symbol]')
+        xlabel('launch power per channel [dBm]')
+        grid on
+        plot(pdbm,irate,'-ob');
+        
         savefile        = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'RamanAmp');
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');

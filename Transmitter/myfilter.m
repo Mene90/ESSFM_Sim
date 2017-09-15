@@ -1,59 +1,5 @@
 function Hf=myfilter(ftype,f,bw,ord)
 
-%MYFILTER Filter device in the frequency domain.
-%   HF=MYFILTER(FTYPE,F,BW,ORD) returns the filter FTYPE evaluated at 
-%   frequencies F in the column vector HF. BW is the the 3-dB bandwidth of
-%   the filter (with exceptions, Note 2), with respect to the filtered signal 
-%   power, i.e., |Hf|^2=0.5 at f=+-bw. 
-%   FTYPE can be a string of the following:
-%
-%   'movavg'    : Short term integrator (moving average) [see Note 2]
-%   'gauss'     : Gaussian filter  [see Note 3]
-%   'butt2'     : Butterworth 2nd order
-%   'butt4'     : Butterworth 4th order
-%   'butt6'     : Butterworth 6th order
-%   'ideal'     : Ideal filter
-%   'bessel5'   : Bessel 5th order
-%   'rc1'       : RC1 filter
-%   'rc2'       : RC2 filter
-%   'supergauss': Super-Gaussian filter of order ORD
-%   'gauss_off' : Gaussian filter with offset ORD from the center of the
-%                 channel
-%
-%   Note 1: The bandwidth BW is a lowpass bandwidth -> For optical bandpass
-%           filters having 3dB bandwidth Bo, it is BW=Bo/2.
-%   Note 2: For the moving average BW is not the 3dB bandwidth,
-%           but the first zero of the sinc, i.e. 1/BW is the duration of the
-%           moving average. The 3dB bandwidth is 0.443*BW.
-%   Note 3: For the Gaussian filter the bandwidth 1/e (B_ue) is related 
-%           to the 3dB bandwidth by  B_ue = 1.6986*BW
-%   Note 4: if the frequency is normalized, the 3dB bandwidth must be
-%           normalized as well to the same value.
-%   Note 5: For future new implementations of special filters, use the 
-%	    variable ORD for the new filter parameters.
-%
-%   Thanks to E. Forestieri for the filter expressions.
-%
-%   Author: Paolo Serena, 2009
-%   University of Parma, Italy
-
-%    This file is part of Optilux, the optical simulator toolbox.
-%    Copyright (C) 2009  Paolo Serena, <serena@tlc.unipr.it>
-%			 
-%    Optilux is free software; you can redistribute it and/or modify
-%    it under the terms of the GNU General Public License as published by
-%    the Free Software Foundation; either version 3 of the License, or
-%    (at your option) any later version.
-%
-%    Optilux is distributed in the hope that it will be useful,
-%    but WITHOUT ANY WARRANTY; without even the implied warranty of
-%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%    GNU General Public License for more details.
-%
-%    You should have received a copy of the GNU General Public License
-%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 % CONSTANTS
 
       r4p2r2=2.61312592975275;      % =sqrt(2*(2+sqrt(2))); % used in Butterworth 4th order
