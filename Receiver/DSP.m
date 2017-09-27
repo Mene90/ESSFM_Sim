@@ -60,7 +60,7 @@ classdef DSP < handle & matlab.mixin.SetGet
         function backpropagation(dsp,Pavg,sig,Nspan,type)
             r     = 0.5;           
             
-            omega = 2*pi*sig.SYMBOLRATE*sig.FN'*1e9;             % [rad/s]
+            omega = 2*pi*(sig.SYMBOLRATE)*sig.FN'*1e9;             % [rad/s]
             betaz = gpuArray(complex((0.5 * omega.^2*dsp.ch.b2...
                                           + omega.^3*dsp.ch.b3/6)*dsp.dz));
 

@@ -59,7 +59,7 @@ switch ftype
     case 'ideal'
 % Ideal filter
 
-      Hf = (abs(x) <= 1);
+      Hf = (abs(x) < 0.5);
     
     case 'bessel5'
 % Bessel 5th order

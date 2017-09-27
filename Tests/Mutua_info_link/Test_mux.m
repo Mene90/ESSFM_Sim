@@ -35,14 +35,14 @@ sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Pulse parameters                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pls.shape   = 'RRC';                     % Shape type
+pls.shape   = 'RC';                      % Shape type
 pls.bw      = 1.0;                       % duty cycle
 pls.ord     = 0;                         % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         optical filter parameters                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 oftype = 'ideal'; % optical filter type
-obw    = 2;     % optical filter bandwidth 
+obw    = 1;     % optical filter bandwidth 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Amplifier parameters                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,7 +57,7 @@ Hf        = filt(pls,sig.FN);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Optical filter                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpass
+oHf       = myfilter(oftype,sig.FN,obw,0);  % Remember that the in the lowpass
                                                 % equivalent domain, the 3 dB bandwidth
                                                 % goes from -bw/2 to + bw/2;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -90,7 +90,7 @@ oHf       = myfilter(oftype,sig.FN,obw*0.5,0);  % Remember that the in the lowpa
     
     dsp.matchedfilter(sig,Hf);
     dsp.downsampling(sig);    
-    dsp.nlpnmitigation(sig);
+%     dsp.nlpnmitigation(sig);
 %     
     avgber       = ErrorEstimation.BER(sig);
     signals      = sig.getproperties();

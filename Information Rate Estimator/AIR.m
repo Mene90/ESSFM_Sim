@@ -1,6 +1,7 @@
 function [ irate ] = AIR(sig, modtype)
-        xk = sig.FIELDX_TX;
-        yk = sig.FIELDX;
+        shift = length(sig.FIELDX_TX)*0.25;
+        xk = sig.FIELDX_TX(shift:length(sig.FIELDX_TX)-shift,1);
+        yk = sig.FIELDX(shift:length(sig.FIELDX)-shift,1);
         
         sigmaxy  = sum(yk.*conj(xk));
         sigmax2  = sum(abs(xk).^2);

@@ -12,6 +12,7 @@ classdef Modulator
             Nt     = sig.NT;
             nfft   = sig.NT * sig.NSYMB;
             H    = filt(pls,sig.FN);
+%             H    = myfilter('ideal',sig.FN,1,0);
             dt   = 1/Nt;
             norm = sqrt(nfft/dt/sum(abs(H).^2));
             H    = norm*H;
@@ -23,6 +24,7 @@ classdef Modulator
             Y=Y.*H;
             E=ifft(Y);
         end
+        
         
 %         function E = ApplyModulation(~, patmat_tx, sig , pls)
 %             
