@@ -165,12 +165,12 @@ switch n
         signal_prop.nsymb    = 2^19;
         signal_prop.symbrate = 50;     
         
-%         for i=1:length(pdbm)
-%             [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i));
-%         end
-%         
-%         ch_properties       = ch.getProperties;
-%         ch_properties.Nspan = link.Nspan;
+        for i=1:length(pdbm)
+            [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i));
+        end
+        
+        ch_properties       = ch.getProperties;
+        ch_properties.Nspan = link.Nspan;
 %       
 %         
 %         for i =1:length(pdbm)
