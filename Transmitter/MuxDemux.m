@@ -7,9 +7,6 @@ classdef MuxDemux
     end
     
     methods (Static = true)
-        function  WDM_Mux(Ex,Ey,sig)
-        
-        end
         
         function  Mux(Ex,Ey,sig)
             CLIGHT = 299792458;
@@ -34,23 +31,25 @@ classdef MuxDemux
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);     % spacing in points
             
             zfieldx = fft(Ex);
+            zfieldy = fft(Ey);
             
             for kch=1:sig.NCH    % create the unique field combining the channels
                 sig.FIELDX = sig.FIELDX + fastshift(zfieldx(:,kch),-ndfn(kch));
-                if any(Ey)
-                    zfieldy = fft(Ey(:,kch));
-                    sig.FIELDY = sig.FIELDY + fastshift(zfieldy,-ndfn(kch));
+                if any(Ey)                    
+                    sig.FIELDY = sig.FIELDY + fastshift(zfieldy(:,kch),-ndfn(kch));
                 end
             end
+            
             sig.FIELDX = ifft(sig.FIELDX);
             
             if any(sig.FIELDY)
                 sig.FIELDY = ifft(sig.FIELDY);
-                sig.FIELDY_TX = Ey;
-            end            
+            end   
+            
         end
         
         function [zfieldx,zfieldy] = Demux (sig,Hf,kch)
+            
             CLIGHT = 299792458;
             minfreq = sig.FN(2)-sig.FN(1);
             maxl=max(sig.LAMBDA);
@@ -72,7 +71,10 @@ classdef MuxDemux
 %             end
 
             zfieldx(:,1) = fastshift(sig.FIELDX,ndfn(kch));
-            zfieldx(:,1) = ifft(zfieldx(:,1) .* Hf);
+            zfieldy(:,1) = fastshift(sig.FIELDY,ndfn(kch));
+            
+            zfieldx(:,1) = ifft(zfieldx(:,1) .* Hf);            
+            zfieldy(:,1) = ifft(zfieldy(:,1) .* Hf);
                         
         end
     

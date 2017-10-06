@@ -1,4 +1,5 @@
 *.asv
+*.m~
 Test/Test5/ESSFM_MAX_SNR.m
 Test/Test5/Test5.m
 Test/Test5/without_loss.fig
