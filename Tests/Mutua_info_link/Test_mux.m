@@ -57,7 +57,7 @@ Hf        = filt(pls,sig.FN);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Optical filter                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-oHf       = myfilter(oftype,sig.FN,obw,0);  % Remember that the in the lowpass
+oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpass
                                                 % equivalent domain, the 3 dB bandwidth
                                                 % goes from -bw/2 to + bw/2;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

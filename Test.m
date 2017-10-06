@@ -106,13 +106,15 @@ switch n
         sp.bprop    = 2;
         
         amp.etasp   = 2;
+        amp.type    = 'EDFA';
         amp.Fn      = 10*log10(2*amp.etasp);
         
         al  = link.attenuation*0.230258509299405*1e-3;
         Gm1 = (exp(al*link.LL)-1.d0);
         N0  = link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
 
-        signal_prop.nsymb    = 2^17;
+        signal_prop.nsymb    = 2^19;
+        signal_prop.nt       = 4;
         signal_prop.symbrate = 10;
                 
 %         SNR_dB   = (-10:10:60);
@@ -132,7 +134,7 @@ switch n
             ch_properties       = ch.getProperties;
             ch_properties.Nspan = link.Nspan;
             
-            savefile        = strcat(distribution,'_InlineDispComp_',int2str(link.LL/1000),'X',int2str(link.Nspan));
+            savefile        = strcat('Test_Results/',distribution,'_InlineDispComp_',int2str(link.LL/1000),'X',int2str(link.Nspan));
             
             save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','-v7.3');
         end
@@ -163,24 +165,24 @@ switch n
         signal_prop.nsymb    = 2^19;
         signal_prop.symbrate = 50;     
         
-        for i=1:length(pdbm)
-            [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i));
-        end
+%         for i=1:length(pdbm)
+%             [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i));
+%         end
+%         
+%         ch_properties       = ch.getProperties;
+%         ch_properties.Nspan = link.Nspan;
+%       
+%         
+%         for i =1:length(pdbm)
+%             irate(i) = AIR(signals{i},'Gaussian');
+%         end
+%         
+%         ylabel('IR [bit/symbol]')
+%         xlabel('launch power per channel [dBm]')
+%         grid on
+%         plot(pdbm,irate,'-ob');
         
-        ch_properties       = ch.getProperties;
-        ch_properties.Nspan = link.Nspan;
-      
-        
-        for i =1:length(pdbm)
-            irate(i) = AIR(signals{i},'Gaussian');
-        end
-        
-        ylabel('IR [bit/symbol]')
-        xlabel('launch power per channel [dBm]')
-        grid on
-        plot(pdbm,irate,'-ob');
-        
-        savefile = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'RamanAmp');
+        savefile = strcat('Test_Results/','G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),amp.type);
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
         
