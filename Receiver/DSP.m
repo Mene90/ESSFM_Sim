@@ -57,12 +57,12 @@ classdef DSP < handle & matlab.mixin.SetGet
            [dsp.C,err] = lsqnonlin(fmin,C0,[],[],options);
         end
         
-        function backpropagation(dsp,Pavg,sig,Nspan,type)
+        function backpropagation(dsp,Pavg,sig,Nspan,type,gpu)
             r     = 0.5;           
             
             omega = 2*pi*(sig.SYMBOLRATE)*sig.FN'*1e9;             % [rad/s]
-            betaz = gpuArray(complex((0.5 * omega.^2*dsp.ch.b2...
-                                          + omega.^3*dsp.ch.b3/6)*dsp.dz));
+            betaz = complex((0.5 * omega.^2*dsp.ch.b2...
+                                          + omega.^3*dsp.ch.b3/6)*dsp.dz);
 
             dx    = (dsp.ch.Lf>=dsp.dz)*dsp.dz     +... 
                     (1-(dsp.ch.Lf>=dsp.dz))*dsp.ch.Lf;
@@ -77,7 +77,7 @@ classdef DSP < handle & matlab.mixin.SetGet
             end
             
             z     = dsp.dz *(0:ceil(dsp.nstep)-1);
-            xi    = gpuArray(-dsp.ch.gamma*Leff*exp(dsp.ch.alphalin*z)*Pavg);
+            xi    = -dsp.ch.gamma*Leff*exp(dsp.ch.alphalin*z)*Pavg;
             
             if(any(sig.FIELDY))
                 xi = xi*8/9;
@@ -85,8 +85,12 @@ classdef DSP < handle & matlab.mixin.SetGet
 
             fiberpartion = (dsp.nstep<1)*1+ (1-(dsp.nstep<1))*Nspan;
             
-            set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
-            set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
+            if gpu
+                betaz  = gpuArray(betaz);
+                xi     = gpuArray(xi);
+                set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
+                set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
+            end
             
             if strcmpi(type,'ssfm')
                 for i=1:fiberpartion
@@ -109,8 +113,14 @@ classdef DSP < handle & matlab.mixin.SetGet
                 error('backpropagation method not recognized');
             end
             
-            set(sig,'FIELDX', gather(get(sig,'FIELDX')));
-            set(sig,'FIELDY', gather(get(sig,'FIELDY')));
+             if gpu
+                set(sig,'FIELDX', gather(get(sig,'FIELDX')));
+                set(sig,'FIELDY', gather(get(sig,'FIELDY')));
+                g      = gpuDevice(1);
+                reset(g);                
+            end
+            
+            
         
         end
                 

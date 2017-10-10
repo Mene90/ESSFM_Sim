@@ -79,25 +79,27 @@ switch n
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
         pdbm                 = (-10:4:8);
-        signal_prop.nsymb    = 2^22;
+        signal_prop.nsymb    = 2^12;
         signal_prop.symbrate = 14;     
         
+        gpu                  = 1;
+        
         for i=1:length(pdbm)
-            [signals{i},SNRdB{i},ch] = TestConfronto(link,sp,signal_prop,amp,pdbm(i),'true');
+            [signals{i},SNRdB{i},ch] = TestConfronto(link,sp,signal_prop,amp,pdbm(i),'true',gpu);
         end
         
         ch_properties       = ch.getProperties;
         ch_properties.Nspan = link.Nspan;
     
-        savefile        = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_DBP_Esatta');
+        savefile        = strcat('TestResults/Test2/','G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_DBP_Esatta');
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','-v7.3');
         
     case 3
         
         distribution     = input('Enter a distribution: ');
-        compensation     = ["ssfm_onlydispcomp","ssfm_onlykercomp","inline"];
-        compname         = ["DispComp","KerrComp","inlineDispComp"];
+%         compensation     = ["ssfm_onlydispcomp","ssfm_onlykercomp","inline"];
+%         compname         = ["DispComp","KerrComp","inlineDispComp"];
         Nspan            = [10];  
         link.Nspan       = Nspan(1);
         link.LL          = 1e5;

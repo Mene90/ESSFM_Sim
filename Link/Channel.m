@@ -73,6 +73,9 @@ classdef Channel < matlab.mixin.SetGet
             set(sig,'FIELDX', gather(get(sig,'FIELDX')));
             set(sig,'FIELDY', gather(get(sig,'FIELDY')));
             
+            g = gpuDevice(1);
+            reset(g);
+            
         end
         
         function propagation(ch,Nspan,ampli,sig)

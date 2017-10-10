@@ -1,4 +1,4 @@
-function [signals,SNRdB,ch] = TestConfronto(link,sp,signal,amp,pdbm,singlepol)
+function [signals,SNRdB,ch] = TestConfronto(link,sp,signal,amp,pdbm,singlepol,gpu)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -58,7 +58,7 @@ pls.ord     = 0.25;                      % pulse roll-off
 % Gerbio  = alphadB*LL*1e-3;
 Gerbio    = alphadB*LL*1e-3+comp_alphadB*comp_LL*1e-3;
 etasp     = amp.etasp;
-ampli     = Ampliflat(Pavg,ch,Gerbio,etasp);   
+ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,'EDFA');   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,24 +77,24 @@ Hf        = filt(pls,sig.FN);
         set(sig,'FIELDY_TX' ,cmapy_tx);
     end
     
-    set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
-    set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
+%     set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
+%     set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
     
     %propagation(ch,Nspan,ampli,sig);
     for i = 1:Nspan
         AddNoise(ampli,sig);
-        sing_span_propagation(ch,sig,'true');
-        sing_span_propagation(comp_ch,sig,'true');
+        sing_span_propagation(ch,sig,gpu);
+        sing_span_propagation(comp_ch,sig,gpu);
     end
         
     %backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
     for i = 1:Nspan
-        backpropagation(dsp_comp,Pavg*10^(-Gerbio*0.1),sig,1,'ssfm');
-        backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,1,'ssfm');        
+        backpropagation(dsp_comp,Pavg*10^(-Gerbio*0.1),sig,1,'ssfm',gpu);
+        backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,1,'ssfm',gpu);        
     end
     
-    set(sig,'FIELDX', gather(get(sig,'FIELDX')));
-    set(sig,'FIELDY', gather(get(sig,'FIELDY')));
+%     set(sig,'FIELDX', gather(get(sig,'FIELDX')));
+%     set(sig,'FIELDY', gather(get(sig,'FIELDY')));
     
     matchedfilter(dsp,sig,Hf);
     nlpnmitigation(dsp,sig);
