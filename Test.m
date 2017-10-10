@@ -79,10 +79,10 @@ switch n
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
         pdbm                 = (-10:4:8);
-        signal_prop.nsymb    = 2^12;
+        signal_prop.nsymb    = 2^22;
         signal_prop.symbrate = 14;     
         
-        gpu                  = 1;
+        gpu                  = 0;
         
         for i=1:length(pdbm)
             [signals{i},SNRdB{i},ch] = TestConfronto(link,sp,signal_prop,amp,pdbm(i),'true',gpu);
