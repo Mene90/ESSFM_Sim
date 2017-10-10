@@ -9,16 +9,17 @@ switch n
     case 1
         
 %         distribution = input('Enter a distribution: ');
-        Nspan            = [70];  
+        Nspan            = [12,6,4];  
         link.Nspan       = Nspan(1);
-        link.LL          = 1.1e5;
-        link.attenuation = 0.3;
+        LL               = [1e5,2e5,3e5];
+        link.LL          = LL(1);
+        link.attenuation = 0.2;
         link.lambda      = 1550;
         link.sprop       = 5;
         
         sp.bprop    = 1/link.Nspan;
         
-        amp.etasp   = 1.76;
+        amp.etasp   = 2;
         amp.Fn      = 10*log10(2*amp.etasp);
         
         al =link.attenuation*0.230258509299405*1e-3;
@@ -31,7 +32,7 @@ switch n
 %         SNR_dB   = (-10:10:60);
 %         pdbm     = 30+10*log10(signal_prop.symbrate*10^9*N0*10.^(SNR_dB*0.1));
 
-        pdbm    =   (-25:5:35);
+        pdbm    =   (-10:5:35);
         P       =   10.^((pdbm-30)*0.1);
         SNR     =   P/signal_prop.symbrate/10^9/N0;
         C       =   log2(1+SNR);
@@ -43,6 +44,7 @@ switch n
             end
             for j = 1:length(Nspan)
                 link.Nspan = Nspan(j);
+                link.LL    = LL(j);
                 sp.bprop    = 1/link.Nspan;
                 for i=1:length(pdbm)
                     [signals{i},SNRdB{i},ch] = TestZeroDispHighPower(link,sp,signal_prop,amp,pdbm(i),distribution);
@@ -51,7 +53,7 @@ switch n
                 ch_properties       = ch.getProperties;
                 ch_properties.Nspan = link.Nspan;
                 
-                savefile        = strcat(distribution,'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_NoDisp_DBP_SS');
+                savefile        = strcat('Test_Results/Test1/',distribution,'/',distribution,'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_NoDisp_DBP_SS');
                 
                 save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
             end
