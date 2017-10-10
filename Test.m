@@ -55,7 +55,7 @@ switch n
                 
                 savefile        = strcat('Test_Results/Test1/',distribution,'/',distribution,'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_NoDisp_DBP_SS');
                 
-                save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
+                save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','-v7.3');
             end
         end
         
@@ -79,7 +79,7 @@ switch n
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
         pdbm                 = (-10:4:8);
-        signal_prop.nsymb    = 2^18;
+        signal_prop.nsymb    = 2^22;
         signal_prop.symbrate = 14;     
         
         for i=1:length(pdbm)
@@ -91,7 +91,7 @@ switch n
     
         savefile        = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_DBP_Esatta');
 
-        save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
+        save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','-v7.3');
         
     case 3
         

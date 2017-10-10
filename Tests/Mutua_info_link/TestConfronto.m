@@ -67,7 +67,7 @@ Hf        = filt(pls,sig.FN);
 
     E      = Laser.GetLaserSource(Pavg, sig,lambda,0);
     
-    [cmapx_tx] = Pattern.gaussian(Nsymb);
+    [cmapx_tx] = Pattern.qam64(Nsymb);
     set(sig,'FIELDX'    ,Modulator.ApplyModulation(E,cmapx_tx,sig,pls));
     set(sig,'FIELDX_TX' ,cmapx_tx);
     
