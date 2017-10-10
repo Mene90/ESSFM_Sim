@@ -94,14 +94,15 @@ switch n
     case 3
         
         distribution     = input('Enter a distribution: ');
-        compensation     = 'inline';%'ssfm_onlykercomp''ssfm_onlydispcomp'
+        compensation     = ["ssfm_onlydispcomp","ssfm_onlykercomp","inline"];
+        compname         = ["DispComp","KerrComp","inlineDispComp"];
         Nspan            = [10];  
         link.Nspan       = Nspan(1);
         link.LL          = 1e5;
         link.attenuation = 0.2;
-        link.disp        = 17;
+        link.disp        = 3;
         link.lambda      = 1550;
-        link.sprop       = 20;
+        link.sprop       = 25;
         
         sp.bprop    = 2;
         
@@ -113,8 +114,8 @@ switch n
         Gm1 = (exp(al*link.LL)-1.d0);
         N0  = link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
 
-        signal_prop.nsymb    = 2^19;
-        signal_prop.nt       = 4;
+        signal_prop.nsymb    = 2^20;
+        signal_prop.nt       = 2;
         signal_prop.symbrate = 10;
                 
 %         SNR_dB   = (-10:10:60);
@@ -125,18 +126,17 @@ switch n
         SNR     =   P/signal_prop.symbrate/10^9/N0;
         C       =   log2(1+SNR);
         SNR_dB  =   10*log10(SNR);
-        for j = 1:length(Nspan)
-            link.Nspan = Nspan(j);
+        for j = 1:length(compensation)
             for i=1:length(pdbm)
-                [signals{i},SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation);
+                [signals{i},sig_dbp{i},SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation(j));
             end
             
             ch_properties       = ch.getProperties;
             ch_properties.Nspan = link.Nspan;
             
-            savefile        = strcat('Test_Results/',distribution,'_InlineDispComp_',int2str(link.LL/1000),'X',int2str(link.Nspan));
+            savefile        = strcat('Test_Results/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt));
             
-            save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','-v7.3');
+            save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','sig_dbp','-v7.3');
         end
         
     case 4
@@ -151,7 +151,7 @@ switch n
         
         sp.bprop    = link.sprop;
         
-        amp.type    = 'Raman';
+        amp.type    = 'EDFA';
         amp.etasp   = 1;
         amp.Fn      = 10*log10(2*amp.etasp);
         
@@ -162,7 +162,7 @@ switch n
         pdbm                 = (-15:1:-5);%[-15,-10,-5,-3,-1,0,1,3,5,10];
         signal_prop.nt       = 4;
         signal_prop.nc       = 3;
-        signal_prop.nsymb    = 2^19;
+        signal_prop.nsymb    = 2^20;
         signal_prop.symbrate = 50;     
         
         for i=1:length(pdbm)
@@ -182,7 +182,7 @@ switch n
 %         grid on
 %         plot(pdbm,irate,'-ob');
         
-        savefile = strcat('Test_Results/','G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),amp.type);
+        savefile = strcat('Test_Results/Test4/',amp.type,'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt));
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
         

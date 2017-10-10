@@ -1,4 +1,4 @@
-function [ signals,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,amp,pdbm,distribution,compensation )
+function [ signals,signals_dbp,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,amp,pdbm,distribution,compensation )
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7,7 +7,7 @@ alphadB   = link.attenuation;     % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
 n2        = 2.5e-20;              % nonlinear index [m^2/W]
 lambda    = link.lambda;          % wavelength [nm] @ dispersion
-D         = link.disp;                    % dispersion [ps/nm/km] @ wavelength
+D         = link.disp;            % dispersion [ps/nm/km] @ wavelength
 S         = 0;                    % slope [ps/nm^2/km] @ wavelength
 
 Ns_prop   = link.sprop;           % number of SSFM propagation step
@@ -34,6 +34,7 @@ comp_ch   = Channel(comp_LL,comp_alphadB,lambda,aeff,n2,D,S,Ns_prop);
 Ns_bprop = sp.bprop;                % SSFM and ESSFM backpropagation steps
 Ns_bprop_comp = 4;
 dsp       = DSP(ch,Ns_bprop);
+dsp_dbp   = DSP(ch,Ns_prop);
 dsp_comp  = DSP(comp_ch,Ns_bprop_comp);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Signal parameters                                 %
@@ -58,7 +59,7 @@ ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,amptype);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pls.shape   = 'RC';                      % Shape type
 pls.bw      = 1;                         % duty cycle
-pls.ord     = 0.2;                       % pulse roll-off
+pls.ord     = 1;                         % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -78,31 +79,43 @@ elseif(distribution == 'G')
 end
 
 set(sig,'FIELDX'    ,Eoptx);
-set(sig,'FIELDX_TX' ,cmapx_tx);
+set(sig,'FIELDX_TX' ,Eoptx);
 %      set(sig,'FIELDX'    ,cmapy_tx);
 %      set(sig,'FIELDY_TX' ,cmapy_tx);
 
-if (compensation == 'inline')
+if (strcmp(compensation,'inline'))
     set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
     set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
     
+    %propagation(ch,Nspan,ampli,sig);
     for i = 1:Nspan
         AddNoise(ampli,sig);
         sing_span_propagation(ch,sig,'true');
         sing_span_propagation(comp_ch,sig,'true');
     end
     
+    %backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
+    sig_dbp = copy(sig);
+    for i = 1:Nspan
+        backpropagation(dsp_comp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm');
+        backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm');        
+    end
+    
     set(sig,'FIELDX', gather(get(sig,'FIELDX')));
     set(sig,'FIELDY', gather(get(sig,'FIELDY')));
 else
+    
     gpu_propagation(ch,Nspan,ampli,sig);
+    sig_dbp = copy(sig);
+    backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,Nspan,'ssfm');
     backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,compensation);
 end
 
 dsp.matchedfilter(sig,Hf);
-dsp.downsampling(sig);  
+% dsp.downsampling(sig);  
 
-signals = sig.getproperties();
+signals     = sig.getproperties();
+signals_dbp = sig_dbp.getproperties();
 
 SNRdB  = 10*log10(1/symbrate/10^9/ampli.N0/Nspan);
 
