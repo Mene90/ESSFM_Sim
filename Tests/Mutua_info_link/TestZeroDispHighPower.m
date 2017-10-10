@@ -34,7 +34,7 @@ set(sig,'POWER',Pavg);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Gerbio    = alphadB*LL*1e-3;
 etasp     = amp.etasp;
-ampli     = Ampliflat(Pavg,ch,Gerbio,etasp);
+ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,'EDFA');
 
 if(distribution == 'HG')
     [cmapx_tx] = Pattern.halfgaussian(Nsymb);
