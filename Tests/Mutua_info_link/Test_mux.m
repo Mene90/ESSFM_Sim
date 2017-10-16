@@ -1,4 +1,4 @@
-function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm)
+function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm,wdm)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,8 +29,12 @@ Ps_dBm   = pdbm;                      % Power vector            [dBm]
 Pavg     = 10.^(0.1*(Ps_dBm -30));    % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
-Nt       = signal.nt;                      % points x symbol
+Nt       = signal.nt;                 % points x symbol
 sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                         WDM parameters                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+cch     =  wdm.cch;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Pulse parameters                               %
@@ -77,10 +81,10 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
     MuxDemux.Mux(Eoptx,[],sig);
     
     gpu_propagation(ch,Nspan,ampli,sig);
-    [zfieldx] = MuxDemux.Demux(sig,Hf,2);
+    [zfieldx] = MuxDemux.Demux(sig,Hf,cch);
     
     set(sig,'FIELDX',zfieldx(:,1));
-    set(sig,'FIELDX_TX',sig.FIELDX_TX(:,2));
+    set(sig,'FIELDX_TX',sig.FIELDX_TX(:,cch));
     
     if (strcmp(amptype,'Raman'))
         dsp.backpropagation(Pavg,sig,Nspan,'ssfm');
