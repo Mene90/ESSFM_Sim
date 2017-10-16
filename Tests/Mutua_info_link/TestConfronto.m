@@ -97,6 +97,7 @@ Hf        = filt(pls,sig.FN);
 %     set(sig,'FIELDY', gather(get(sig,'FIELDY')));
     
     matchedfilter(dsp,sig,Hf);
+    downsampling(dsp,sig);
     nlpnmitigation(dsp,sig);
     
     signals = sig.getproperties();   
