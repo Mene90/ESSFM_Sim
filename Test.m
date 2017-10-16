@@ -167,10 +167,12 @@ switch n
         signal_prop.nt       = 4;
         signal_prop.nc       = 3;
         signal_prop.nsymb    = 2^20;
-        signal_prop.symbrate = 50;     
+        signal_prop.symbrate = 50;  
+        
+        wdm.cch              = 2;
         
         for i=1:length(pdbm)
-            [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i));
+            [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm);
         end
         
         ch_properties       = ch.getProperties;
