@@ -29,8 +29,15 @@
         
         wdm.cch              = 3;
         
+        snr0dB = zeros(length(pdbm),1);
+        
         for i=1:length(pdbm)
-            [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm);
+            [signals{i},snr0dB(i),ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm);
+            sgs(i).snr0dB = snr0dB;
+            sgs(i).sg = 1;
+            sgs(i).Pu = pdbm(i);
+            sgs(i).subc(1).tx = signals{i}.FIELDX_TX;
+            sgs(i).subc(1).rx = signals{i}.FIELDX;
         end
         
         ch_properties       = ch.getProperties;
@@ -38,4 +45,4 @@
         
         savefile = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt));
 
-        save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
+        save(savefile,'sgs','SNRdB','ch_properties','amp','signal_prop','pdbm');
