@@ -87,9 +87,9 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
     set(sig,'FIELDX_TX',sig.FIELDX_TX(:,cch));
     
     if (strcmp(amptype,'Raman'))
-        dsp.backpropagation(Pavg,sig,Nspan,'ssfm');
+        dsp.backpropagation(Pavg,sig,Nspan,'ssfm',1);
     else
-        dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
+        dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm',1);
     end
     
     dsp.matchedfilter(sig,Hf);

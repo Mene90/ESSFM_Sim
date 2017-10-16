@@ -36,6 +36,6 @@
         ch_properties       = ch.getProperties;
         ch_properties.Nspan = link.Nspan;
         
-        savefile = strcat('/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt));
+        savefile = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt));
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
