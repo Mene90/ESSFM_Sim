@@ -7,11 +7,11 @@
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
-        link.sprop       = 100;
-        link.nlindex     = 2.5e-20;
+        link.sprop       = 10;
+        link.nlindex     = 0;%2.5e-20;
         link.disp        = 17;
         
-        sp.bprop    = link.sprop;
+        sp.bprop    = 1;%link.sprop;
         
         amp.type    = 'Raman';
         amp.etasp   = 1;
@@ -22,7 +22,7 @@
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
         pdbm                 = (-13:1:-4);%[-15,-10,-5,-3,-1,0,1,3,5,10];
-        signal_prop.nt       = 5;
+        signal_prop.nt       = 6;
         signal_prop.nc       = 5;
         signal_prop.nsymb    = 2^19;
         signal_prop.symbrate = 50;    
@@ -45,4 +45,4 @@
         
         savefile = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt));
 
-        save(savefile,'sgs','SNRdB','ch_properties','amp','signal_prop','pdbm');
+        save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm');
