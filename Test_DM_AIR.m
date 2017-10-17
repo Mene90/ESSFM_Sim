@@ -36,8 +36,8 @@
             sgs(i).snr0dB = snr0dB;
             sgs(i).sg = 1;
             sgs(i).Pu = pdbm(i);
-            sgs(i).subc(1).tx = signals{i}.FIELDX_TX(57344:2^19-57344);
-            sgs(i).subc(1).rx = signals{i}.FIELDX(57344:2^19-57344);
+            sgs(i).subc(1).tx = signals{i}.FIELDX_TX(57344:2^19-57344-1);
+            sgs(i).subc(1).rx = signals{i}.FIELDX(57344:2^19-57344-1);
         end
         
         ch_properties       = ch.getProperties;
