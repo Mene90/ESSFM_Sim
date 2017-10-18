@@ -22,8 +22,8 @@
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
         pdbm                 = (-13:1:-4);%[-15,-10,-5,-3,-1,0,1,3,5,10];
-        signal_prop.nt       = 6;
-        signal_prop.nc       = 5;
+        signal_prop.nt       = 4;
+        signal_prop.nc       = 3;
         signal_prop.nsymb    = 2^19;
         signal_prop.symbrate = 50;    
         

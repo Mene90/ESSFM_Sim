@@ -41,7 +41,7 @@ cch     =  wdm.cch;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pls.shape   = 'RC';                      % Shape type
 pls.bw      = 1.0;                       % duty cycle
-pls.ord     = 0;                         % pulse roll-off
+pls.ord     = 0.5;                         % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         optical filter parameters                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -80,7 +80,7 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
     set(sig,'FIELDX_TX',cmapx);
     MuxDemux.Mux(Eoptx,[],sig);
     
-    gpu_propagation(ch,Nspan,ampli,sig);
+%     gpu_propagation(ch,Nspan,ampli,sig);
     [zfieldx] = MuxDemux.Demux(sig,Hf,cch);
     
     set(sig,'FIELDX',zfieldx(:,1));
