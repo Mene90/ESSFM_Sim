@@ -1,4 +1,4 @@
-function [ signals,signals_dbp,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,amp,pdbm,distribution,compensation )
+function [ signals,signals_dbp,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,amp,pdbm,distribution,compensation,gpu)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -59,7 +59,7 @@ ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,amptype);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 pls.shape   = 'RC';                      % Shape type
 pls.bw      = 1;                         % duty cycle
-pls.ord     = 1;                         % pulse roll-off
+pls.ord     = 0.2;                       % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -97,8 +97,8 @@ if (strcmp(compensation,'inline'))
     %backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
     sig_dbp = copy(sig);
     for i = 1:Nspan
-        backpropagation(dsp_comp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm');
-        backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm');        
+        backpropagation(dsp_comp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);
+        backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);        
     end
     
     set(sig,'FIELDX', gather(get(sig,'FIELDX')));
@@ -107,8 +107,7 @@ else
     
     gpu_propagation(ch,Nspan,ampli,sig);
     sig_dbp = copy(sig);
-    backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,Nspan,'ssfm');
-    backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,compensation);
+    backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,Nspan,'ssfm',gpu);
 end
 
 dsp.matchedfilter(sig,Hf);

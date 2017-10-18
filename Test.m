@@ -98,8 +98,8 @@ switch n
     case 3
         
         distribution     = input('Enter a distribution: ');
-%         compensation     = ["ssfm_onlydispcomp","ssfm_onlykercomp","inline"];
-%         compname         = ["DispComp","KerrComp","inlineDispComp"];
+        compensation     = [string('ssfm_onlydispcomp'),string('ssfm_onlykercomp'), string('inline')];
+        compname         = [string('DispComp'),string('KerrComp'),string('inlineDispComp')];
         Nspan            = [10];  
         link.Nspan       = Nspan(1);
         link.LL          = 1e5;
@@ -130,15 +130,18 @@ switch n
         SNR     =   P/signal_prop.symbrate/10^9/N0;
         C       =   log2(1+SNR);
         SNR_dB  =   10*log10(SNR);
+        
+        gpu     =  1;
+        
         for j = 1:length(compensation)
             for i=1:length(pdbm)
-                [signals{i},sig_dbp{i},SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation(j));
+                [signals{i},sig_dbp{i},SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation(j),gpu);
             end
             
             ch_properties       = ch.getProperties;
             ch_properties.Nspan = link.Nspan;
             
-            savefile        = strcat('Test_Results/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt));
+            savefile        = strcat('Test_Results/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'02');
             
             save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','sig_dbp','-v7.3');
         end
