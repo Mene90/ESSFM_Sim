@@ -158,7 +158,7 @@ switch n
         
         sp.bprop    = link.sprop;
         
-        amp.type    = 'EDFA';
+        amp.type    = [string('EDFA'),string('Raman')];
         amp.etasp   = 1;
         amp.Fn      = 10*log10(2*amp.etasp);
         
@@ -174,8 +174,10 @@ switch n
         
         wdm.cch              = 2;
         
-        for i=1:length(pdbm)
-            [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm);
+        for j = 1:length(amp.type)
+            for i=1:length(pdbm)
+                [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm);
+            end
         end
         
         ch_properties       = ch.getProperties;
@@ -191,7 +193,7 @@ switch n
 %         grid on
 %         plot(pdbm,irate,'-ob');
         
-        savefile = strcat('Test_Results/Test4/',amp.type,'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt));
+        savefile = strcat('Test_Results/Test4/',amp.type,'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt),'02');
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
         
