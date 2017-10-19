@@ -94,19 +94,22 @@ if (strcmp(compensation,'inline'))
         sing_span_propagation(comp_ch,sig,'true');
     end
     
-    %backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
-    sig_dbp = copy(sig);
-    for i = 1:Nspan
-        backpropagation(dsp_comp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);
-        backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);        
-    end
-    
+        
     set(sig,'FIELDX', gather(get(sig,'FIELDX')));
     set(sig,'FIELDY', gather(get(sig,'FIELDY')));
-else
     
+    %backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
+    sig_dbp = copy(sig);
+    for i = 1:Nspan            
+        backpropagation(dsp_comp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);
+        backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);    
+    end
+
+else  
     gpu_propagation(ch,Nspan,ampli,sig);
     sig_dbp = copy(sig);
+    
+    backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,compensation,gpu)
     backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,Nspan,'ssfm',gpu);
 end
 

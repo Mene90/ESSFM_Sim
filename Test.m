@@ -79,7 +79,7 @@ switch n
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
         pdbm                 = (-10:4:8);
-        signal_prop.nsymb    = 2^22;
+        signal_prop.nsymb    = 2^20;
         signal_prop.symbrate = 14;     
         
         gpu                  = 0;
@@ -145,7 +145,7 @@ switch n
             ch_properties       = ch.getProperties;
             ch_properties.Nspan = link.Nspan;
             
-            savefile        = strcat('Test_Results/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'roll_02');
+            savefile        = char(strcat('Test_Results/Test3',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'roll_02'));
             
             save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','sig_dbp','pls','-v7.3');
         end
@@ -189,8 +189,13 @@ switch n
                 [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm,pls);
             end
             ch_properties       = ch.getProperties;            
+<<<<<<< HEAD
             savefile{j} = strcat('Test_Results/Test4/',amp.type(j),'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type(j),'_nt_',int2str(signal_prop.nt),'roll_01');
             save(savefile{j},'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','pls','-v7.3');
+=======
+            savefile(j) = char(strcat('Test_Results/Test4/',amp.type(j),'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type(j),'_nt_',int2str(signal_prop.nt),'roll_01'));
+            save(savefile(j),'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','pls','-v7.3');
+>>>>>>> 54b6c003a0546510bdcf15474094d40eb801016f
         end
         
         
