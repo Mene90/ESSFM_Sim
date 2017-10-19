@@ -79,7 +79,7 @@ switch n
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
         pdbm                 = (-10:4:8);
-        signal_prop.nsymb    = 2^22;
+        signal_prop.nsymb    = 2^20;
         signal_prop.symbrate = 14;     
         
         gpu                  = 0;
