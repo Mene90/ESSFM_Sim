@@ -1,4 +1,4 @@
-function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm,wdm)
+function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm,wdm,pls)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,9 +39,9 @@ cch     =  wdm.cch;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Pulse parameters                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pls.shape   = 'RC';                      % Shape type
-pls.bw      = 1.0;                       % duty cycle
-pls.ord     = 0.1;                         % pulse roll-off
+% pls.shape   = 'RRC';                      % Shape type
+% pls.bw      = 1.0;                        % duty cycle
+% pls.ord     = 0.1;                        % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         optical filter parameters                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -96,9 +96,8 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
     dsp.downsampling(sig);    
 %     dsp.nlpnmitigation(sig);
 %     
-    avgber       = ErrorEstimation.BER(sig);
+%     avgber       = ErrorEstimation.BER(sig);
     signals      = sig.getproperties();
     SNRdB        = 10*log10(1/symbrate/10^9/ampli.N0/Nspan);
-%     sig          = Signal(Nsymb,Nt,symbrate,lambda,5); 
     
 end

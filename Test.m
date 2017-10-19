@@ -121,6 +121,10 @@ switch n
         signal_prop.nsymb    = 2^20;
         signal_prop.nt       = 2;
         signal_prop.symbrate = 10;
+        
+       pls.shape   = 'RC';                      % Shape type
+       pls.bw      = 1;                         % duty cycle
+       pls.ord     = 0.2;                       % pulse roll-off
                 
 %         SNR_dB   = (-10:10:60);
 %         pdbm     = 30+10*log10(signal_prop.symbrate*10^9*N0*10.^(SNR_dB*0.1));
@@ -135,15 +139,15 @@ switch n
         
         for j = 1:length(compensation)
             for i=1:length(pdbm)
-                [signals{i},sig_dbp{i},SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation(j),gpu);
+                [signals{i},sig_dbp{i},SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation(j),gpu,pls);
             end
             
             ch_properties       = ch.getProperties;
             ch_properties.Nspan = link.Nspan;
             
-            savefile        = strcat('Test_Results/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'02');
+            savefile        = strcat('Test_Results/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'roll_02');
             
-            save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','sig_dbp','-v7.3');
+            save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','sig_dbp','pls','-v7.3');
         end
         
     case 4
@@ -174,14 +178,22 @@ switch n
         
         wdm.cch              = 2;
         
+       pls.shape   = 'RRC';                     % Shape type
+       pls.bw      = 1;                         % duty cycle
+       pls.ord     = 0.1;                       % pulse roll-off
+        
+        ch_properties.Nspan = link.Nspan;
+        
         for j = 1:length(amp.type)
             for i=1:length(pdbm)
-                [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm);
+                [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm,pls);
             end
+            ch_properties       = ch.getProperties;            
+            savefile(j) = strcat('Test_Results/Test4/',amp.type(j),'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type(j),'_nt_',int2str(signal_prop.nt),'roll_01');
+            save(savefile(j),'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','pls','-v7.3');
         end
         
-        ch_properties       = ch.getProperties;
-        ch_properties.Nspan = link.Nspan;
+        
 %       
 %         
 %         for i =1:length(pdbm)
@@ -193,7 +205,7 @@ switch n
 %         grid on
 %         plot(pdbm,irate,'-ob');
         
-        savefile = strcat('Test_Results/Test4/',amp.type,'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt),'02');
+%         savefile = strcat('Test_Results/Test4/',amp.type,'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_nt_',int2str(signal_prop.nt));
 
         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
         
