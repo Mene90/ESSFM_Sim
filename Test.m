@@ -207,6 +207,6 @@ switch n
         
 %         savefile = strcat('Test_Results/Test4/',amp.type,'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_nt_',int2str(signal_prop.nt));
 
-        save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
+%         save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm');
         
 end
