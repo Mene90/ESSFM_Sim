@@ -11,7 +11,7 @@ classdef Ampliflat
     
     methods
         
-        function amp = Ampliflat(Pavg,ch,G,etasp,type)
+        function amp = Ampliflat(Pavg,ch,G,etasp,type,Nspan)
           
           if (strcmp(type,'Raman'))            
             ktusual     = etasp;
@@ -23,7 +23,9 @@ classdef Ampliflat
             amp.N0  = etasp*(Gm1)*amp.HPLANCK*amp.CLIGHT...
                         /(ch.lambda * 1e-9)/Pavg;          
           end
-            
+          
+          amp.N0 = amp.N0*Nspan;
+          
 %             N0=Gm1*obj.HPLANCK*obj.CLIGHT/(ch.lambda * 1e-9)*etasp;  % Accumulate ASE Noise PSD
 % %             SNR=Pavg/(ch.signal.SYMBOLRATE * 1e+9)/N0;
 %             SNR=1/(ch.signal.SYMBOLRATE * 1e+9)/N0;

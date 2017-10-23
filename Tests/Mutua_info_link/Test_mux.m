@@ -46,7 +46,7 @@ cch     =  wdm.cch;
 %                         optical filter parameters                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 oftype = 'ideal'; % optical filter type
-obw    = 1;     % optical filter bandwidth 
+obw    = 1;       % optical filter bandwidth 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Amplifier parameters                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -69,7 +69,7 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
        
     set(sig,'POWER',Pavg);
     
-    ampli  = Ampliflat(Pavg,ch,Gerbio,etasp,amptype);
+    ampli  = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nspan);
     E      = Laser.GetLaserSource(Pavg,sig,lambda,0.4009);
     
     for ii = 1:sig.NCH
@@ -77,10 +77,15 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
         Eoptx(:,ii)   = Modulator.ApplyModulation(E,cmapx(:,ii),sig,pls);
     end
     
-    set(sig,'FIELDX_TX',cmapx);
+    set(sig,'FIELDX_TX',Eoptx);
     MuxDemux.Mux(Eoptx,[],sig);
     
+    for i = 1:Nspan
+        sing_span_propagation(ch,sig,'true')
+    end
+    AddNoise(ampli,sig);
 %     gpu_propagation(ch,Nspan,ampli,sig);
+
     [zfieldx] = MuxDemux.Demux(sig,oHf,cch);
     
     set(sig,'FIELDX',zfieldx(:,1));
@@ -92,12 +97,12 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
         dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm',1);
     end
     
-    dsp.matchedfilter(sig,Hf);
-    dsp.downsampling(sig);    
+%     dsp.matchedfilter(sig,Hf);
+%     dsp.downsampling(sig);    
 %     dsp.nlpnmitigation(sig);
 %     
 %     avgber       = ErrorEstimation.BER(sig);
     signals      = sig.getproperties();
-    SNRdB        = 10*log10(1/symbrate/10^9/ampli.N0/Nspan);
+    SNRdB        = 10*log10(1/symbrate/10^9/ampli.N0);
     
 end
