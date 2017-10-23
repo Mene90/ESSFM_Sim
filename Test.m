@@ -189,8 +189,13 @@ switch n
                 [signals{i},SNRdB{i},ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm,pls);
             end
             ch_properties       = ch.getProperties;            
-            savefile(j) = char(strcat('Test_Results/Test4/',amp.type(j),'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type(j),'_nt_',int2str(signal_prop.nt),'roll_01'));
-            save(savefile(j),'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','pls','-v7.3');
+% <<<<<<< HEAD
+            savefile{j} = strcat('Test_Results/Test4/',amp.type(j),'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type(j),'_nt_',int2str(signal_prop.nt),'roll_01');
+            save(savefile{j},'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','pls','-v7.3');
+% =======
+%             savefile(j) = char(strcat('Test_Results/Test4/',amp.type(j),'/G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type(j),'_nt_',int2str(signal_prop.nt),'roll_01'));
+%             save(savefile(j),'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','pls','-v7.3');
+% >>>>>>> 54b6c003a0546510bdcf15474094d40eb801016f
         end
         
         
