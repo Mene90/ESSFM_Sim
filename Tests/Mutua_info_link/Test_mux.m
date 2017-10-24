@@ -77,7 +77,7 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
         Eoptx(:,ii)   = Modulator.ApplyModulation(E,cmapx(:,ii),sig,pls);
     end
     
-    set(sig,'FIELDX_TX',Eoptx);
+    set(sig,'FIELDX_TX',cmapx);
     MuxDemux.Mux(Eoptx,[],sig);
     
     for i = 1:Nspan
@@ -97,11 +97,11 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
         dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm',1);
     end
     
-%     dsp.matchedfilter(sig,Hf);
-%     dsp.downsampling(sig);    
-%     dsp.nlpnmitigation(sig);
+%    dsp.matchedfilter(sig,Hf);
+    dsp.downsampling(sig);    
+%    dsp.nlpnmitigation(sig);
 %     
-%     avgber       = ErrorEstimation.BER(sig);
+%    avgber       = ErrorEstimation.BER(sig);
     signals      = sig.getproperties();
     SNRdB        = 10*log10(1/symbrate/10^9/ampli.N0);
     

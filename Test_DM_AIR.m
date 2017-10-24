@@ -21,27 +21,27 @@
         Gm1=(exp(al*link.LL)-1.d0);
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        pdbm                 = (-9:1:-7);%[-15,-10,-5,-3,-1,0,1,3,5,10];
-        signal_prop.nt       = 5;
+        pdbm                 = (-13:1:-4);%[-15,-10,-5,-3,-1,0,1,3,5,10];
+        signal_prop.nt       = 8;
         signal_prop.nc       = 5;
         signal_prop.nsymb    = 2^19;
         signal_prop.symbrate = 50;    
         
         wdm.cch              = 3;
         
-        pls.shape   = 'RC';                      % Shape type
+        pls.shape   = 'RC';                       % Shape type
         pls.bw      = 1.0;                        % duty cycle
         pls.ord     = 0;                          % pulse roll-off
         
         snr0dB = zeros(length(pdbm),1);
         
         for i=1:length(pdbm)
-%             [signals{i},snr0dB(i),ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm,pls);
-%             sgs(i).snr0dB = snr0dB;
-%             sgs(i).sg = 1;
-%             sgs(i).Pu = pdbm(i);
-            sgs(i).subc(1).tx = signals{i}.FIELDX_TX(1105920:(2^19*5)-1105920-1);
-            sgs(i).subc(1).rx = signals{i}.FIELDX(1105920:(2^19*5)-1105920-1);
+            [signals{i},snr0dB(i),ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm,pls);
+            sgs(i).snr0dB = snr0dB;
+            sgs(i).sg = 1;
+            sgs(i).Pu = pdbm(i);
+            sgs(i).subc(1).tx = signals{i}.FIELDX_TX(57344:2^19-57344-1);
+            sgs(i).subc(1).rx = signals{i}.FIELDX(57344:2^19-57344-1);
         end
         
         ch_properties       = ch.getProperties;
