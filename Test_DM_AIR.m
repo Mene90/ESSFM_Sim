@@ -21,11 +21,19 @@
         Gm1=(exp(al*link.LL)-1.d0);
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        pdbm                 = (-13:1:-4);%[-15,-10,-5,-3,-1,0,1,3,5,10];
+        sub_signal.nt        = 4;
+        sub_signal.nsc       = 4;
+        sub_signal.nsymb     = 102400;
+        sub_signal.symbrate  = 12.5;
+        
+        pdbm                 = (-9:1:-7);%[-15,-10,-5,-3,-1,0,1,3,5,10];
+        
         signal_prop.nt       = 8;
         signal_prop.nc       = 5;
-        signal_prop.nsymb    = 2^19;
-        signal_prop.symbrate = 50;    
+        signal_prop.nsymb    = sub_signal.nsymb*sub_signal.nt;
+        signal_prop.symbrate = sub_signal.symbrate*sub_signal.nsc;   
+        
+       
         
         wdm.cch              = 3;
         
@@ -36,12 +44,14 @@
         snr0dB = zeros(length(pdbm),1);
         
         for i=1:length(pdbm)
-            [signals{i},snr0dB(i),ch] = Test_mux(link,sp,signal_prop,amp,pdbm(i),wdm,pls);
+            [signals{i},snr0dB(i),ch] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,4);
             sgs(i).snr0dB = snr0dB;
             sgs(i).sg = 1;
             sgs(i).Pu = pdbm(i);
-            sgs(i).subc(1).tx = signals{i}.FIELDX_TX(57344:2^19-57344-1);
-            sgs(i).subc(1).rx = signals{i}.FIELDX(57344:2^19-57344-1);
+            for j=1:sub_signal.nsc
+                sgs(i).subc(j).tx = sqrt(sub_signal.nsc)*signals{i}.FIELDX_TX(:,j);
+                sgs(i).subc(j).rx = signals{i}.SUB_FIELDX(:,j);
+            end
         end
         
         ch_properties       = ch.getProperties;
@@ -49,5 +59,5 @@
         
 %         savefile = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt));
 
-        savefile = 'my_sgs_IDA_wdm5_10x100_1sc';
+        savefile = 'my_sgs_IDA_wdm5_10x100_4sc';
         save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm');

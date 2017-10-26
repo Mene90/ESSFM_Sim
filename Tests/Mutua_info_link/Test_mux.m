@@ -1,4 +1,4 @@
-function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm,wdm,pls)
+function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm,wdm,pls,Nsc)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,7 +30,7 @@ Pavg     = 10.^(0.1*(Ps_dBm -30));    % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
 Nt       = signal.nt;                 % points x symbol
-sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
+sig      = Signal(Nsymb*4,Nt,symbrate,lambda,signal.nc);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         WDM parameters                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -70,15 +70,17 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
     set(sig,'POWER',Pavg);
     
     ampli  = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nspan);
-    E      = Laser.GetLaserSource(Pavg,sig,lambda,0.4009);
+    E      = Laser.GetLaserSource(Pavg,sig,lambda,0.400835);
     
     for ii = 1:sig.NCH
-        [cmapx(:,ii)] = Pattern.gaussian(Nsymb);        
-        Eoptx(:,ii)   = Modulator.ApplyModulation(E,cmapx(:,ii),sig,pls);
+        
+        [cmapx(:,ii)]   = Pattern.gaussian(Nsymb);
+        Eoptx(:,ii)    = Modulator.ApplyModulation(subE,cmapx(:,ii),sig,pls);
+        
     end
     
     set(sig,'FIELDX_TX',cmapx);
-    MuxDemux.Mux(Eoptx,[],sig);
+    MuxDemux.Mux(Eoptx,[],sig,0);
     
     for i = 1:Nspan
         sing_span_propagation(ch,sig,'true')
@@ -86,9 +88,9 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
     AddNoise(ampli,sig);
 %     gpu_propagation(ch,Nspan,ampli,sig);
 
-    [zfieldx] = MuxDemux.Demux(sig,oHf,cch);
+    [zfieldx] = MuxDemux.Demux(sig,oHf,cch,0);
     
-    set(sig,'FIELDX',zfieldx(:,1));
+    set(sig,'FIELDX',zfieldx(:,cch));
     set(sig,'FIELDX_TX',sig.FIELDX_TX(:,cch));
     
     if (strcmp(amptype,'Raman'))
@@ -96,9 +98,9 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
     else
         dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm',1);
     end
-    
+
 %    dsp.matchedfilter(sig,Hf);
-    dsp.downsampling(sig);    
+    dsp.downsampling(sig);
 %    dsp.nlpnmitigation(sig);
 %     
 %    avgber       = ErrorEstimation.BER(sig);

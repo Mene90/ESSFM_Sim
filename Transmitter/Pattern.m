@@ -48,6 +48,11 @@ classdef Pattern
             pat = usrad2*(randn(nsymbols,1)+1i*randn(nsymbols,1));
         end
         
+       function [pat]       = subc_gaussian(nsymbols,sg)
+            usrad2=1./sqrt(2.)*sg;
+            pat = usrad2*(randn(nsymbols,1)+1i*randn(nsymbols,1));
+        end
+        
         function [pat]      = halfgaussian(nsymbols)
             hgpd  = makedist('HalfNormal');
             upd   = makedist('Uniform');
