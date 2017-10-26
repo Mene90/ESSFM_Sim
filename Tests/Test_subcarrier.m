@@ -1,4 +1,4 @@
-function [signals,SNRdB,ch] = Test_subcarrier(link,sp,signal,sub_signal,amp,pdbm,wdm,pls,Nsc)
+function [signals,SNRdB,ch] = Test_subcarrier(link,sp,signal,sub_signal,amp,pdbm,wdm,pls)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -72,27 +72,50 @@ ampli  = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nspan);
 %% Subcarrier creation
 for ii = 1:sig.NCH
     set(sub_sig{ii},'POWER',Pavg);
-    Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.10017);
-    
-    for j = 1:Nsc
-        [sub_cmapx(:,j)]  = Pattern.subc_gaussian(Nsymb,1/sqrt(sub_signal.nsc));
-         sub_Eoptx(:,j)   = Modulator.ApplyModulation([],sub_cmapx(:,j),sub_sig{ii},pls);
+    if sub_signal.nsc == 4
+        Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.10017);
+    else
+        Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.4005);
     end
-%     sc_Eoptx{ii}    = sub_Eoptx;
+    
+    for j = 1:sub_signal.nsc
+        [sub_cmapx(:,j)]  = Pattern.subc_gaussian(Nsymb,1/sqrt(sub_signal.nsc));
+        if (not(sub_signal.nsc == 1))
+         sub_Eoptx(:,j)   = Modulator.ApplyModulation([],sub_cmapx(:,j),sub_sig{ii},pls);
+        else
+         sub_Eoptx(:,j)   = sub_cmapx(:,j);   
+        end
+    end
+    
     set(sub_sig{ii},'FIELDX_TX' ,sub_cmapx);
     set(sub_sig{ii},'SUB_FIELDX',sub_Eoptx);   
 end
 
 %% Sub carrier Multiplexing
-for ii = 1:sig.NCH
-    MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,[],sub_sig{ii},2);
+if (not(sub_signal.nsc == 1))
+    if sub_signal.nsc == 4
+        for ii = 1:sig.NCH
+            MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,[],sub_sig{ii},2);
+        end
+    else
+        for ii = 1:sig.NCH
+            MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,[],sub_sig{ii},0);
+        end
+    end
 end
 
 %% Channel Multiplexing
 Laser.GetLaserSource(Pavg,sig,lambda,0.400835);
-for ii = 1:sig.NCH    
-    Eoptx(:,ii) = Modulator.ApplyModulation([],sub_sig{ii}.FIELDX,sig,pls);
+if (not(sub_signal.nsc == 1))
+    for ii = 1:sig.NCH
+        Eoptx(:,ii) = Modulator.ApplyModulation([],sub_sig{ii}.FIELDX,sig,pls);
+    end
+else
+    for ii = 1:sig.NCH
+        Eoptx(:,ii) = Modulator.ApplyModulation([],sub_sig{ii}.SUB_FIELDX,sig,pls);
+    end
 end
+
 MuxDemux.Mux(Eoptx,[],sig,0);
 
 %% Propagation
@@ -116,15 +139,17 @@ set(sig,'FIELDX',zfieldx(:,cch));
 
 %% Subcarrier Demultiplexing
  dsp.downsampling(sig); 
- oHf      = myfilter(oftype,sub_sig{1}.FN,obw,0);
- set(sig,'FN',sub_sig{1}.FN);
- set(sig,'SYMBOLRATE',sub_signal.symbrate); 
- set(sig,'NCH',sub_signal.nsc)
- set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
- set(sig, 'NT', sub_signal.nt);
- Laser.GetLaserSource(Pavg,sig,lambda,0.10017);
- [sig.SUB_FIELDX] = MuxDemux.Demux(sig,oHf,0,2);
- dsp.scdownsampling(sig);
+ if (not(sub_signal.nsc == 1))
+     oHf      = myfilter(oftype,sub_sig{1}.FN,obw,0);
+     set(sig,'FN',sub_sig{1}.FN);
+     set(sig,'SYMBOLRATE',sub_signal.symbrate);
+     set(sig,'NCH',sub_signal.nsc)
+     set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
+     set(sig, 'NT', sub_signal.nt);
+     Laser.GetLaserSource(Pavg,sig,lambda,0.10017);
+     [sig.SUB_FIELDX] = MuxDemux.Demux(sig,oHf,0,2);
+     dsp.scdownsampling(sig);
+ end
  signals      = sig.getproperties();
  SNRdB        = 10*log10(1/symbrate/10^9/ampli.N0);
  

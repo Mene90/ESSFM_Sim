@@ -31,6 +31,10 @@ classdef MuxDemux
             minfreq = sig.FN(2)-sig.FN(1);                     % minfreq = 1/sig.NSYMB
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);     % spacing in points
             
+            if sig.NCH == 2
+                ndfn(1) = 0;
+            end
+            
             zfieldx = fft(Ex);
             zfieldy = fft(Ey);
             
@@ -61,6 +65,10 @@ classdef MuxDemux
             lamc = round(2*maxl*minl/(maxl+minl));                   % central wavelength
             deltafn = round(CLIGHT*(1/lamc-1./sig.LAMBDA),rn);       % frequency spacing
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);           % spacing in points
+            
+            if sig.NCH == 2
+                ndfn(1) = 0;
+            end
             
             sig.FIELDX = fft(sig.FIELDX);
             sig.FIELDY = fft(sig.FIELDY);

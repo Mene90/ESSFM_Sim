@@ -11,7 +11,7 @@
         link.nlindex     = 2.5e-20;
         link.disp        = 17;
         
-        sp.bprop    = 100;%link.sprop;
+        sp.bprop    = 100;
         
         amp.type    = 'Raman';
         amp.etasp   = 1;
@@ -21,19 +21,17 @@
         Gm1=(exp(al*link.LL)-1.d0);
         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        sub_signal.nt        = 4;
-        sub_signal.nsc       = 4;
-        sub_signal.nsymb     = 102400;
-        sub_signal.symbrate  = 12.5;
+        nsc                  = [1,2,4];
+        nt                   = [1,2,4];
         
-        pdbm                 = (-9:1:-7);%[-15,-10,-5,-3,-1,0,1,3,5,10];
+        
+        
+        
+        pdbm                 = (-13:1:-4);
         
         signal_prop.nt       = 8;
-        signal_prop.nc       = 5;
-        signal_prop.nsymb    = sub_signal.nsymb*sub_signal.nt;
-        signal_prop.symbrate = sub_signal.symbrate*sub_signal.nsc;   
-        
-       
+        signal_prop.nc       = 5;        
+   
         
         wdm.cch              = 3;
         
@@ -43,21 +41,40 @@
         
         snr0dB = zeros(length(pdbm),1);
         
-        for i=1:length(pdbm)
-            [signals{i},snr0dB(i),ch] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,4);
-            sgs(i).snr0dB = snr0dB;
-            sgs(i).sg = 1;
-            sgs(i).Pu = pdbm(i);
-            for j=1:sub_signal.nsc
-                sgs(i).subc(j).tx = sqrt(sub_signal.nsc)*signals{i}.FIELDX_TX(:,j);
-                sgs(i).subc(j).rx = signals{i}.SUB_FIELDX(:,j);
+        for k = 1:length(nsc)
+            
+            sub_signal.nsc       = nsc(k);
+            sub_signal.nt        = nt(k);
+            sub_signal.nsymb     = 409600/sub_signal.nsc;
+            sub_signal.symbrate  = 50/sub_signal.nsc;
+            
+            signal_prop.symbrate = sub_signal.symbrate*sub_signal.nsc;
+            signal_prop.nsymb    = sub_signal.nsymb*sub_signal.nt;
+            
+            
+            
+            for i = 1:length(pdbm)
+                
+                [signals{i},snr0dB(i),ch] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls);
+                sgs(i).snr0dB = snr0dB;
+                sgs(i).sg = 1/sqrt(sub_signal.nsc);
+                sgs(i).Pu = pdbm(i);
+                
+                for j=1:sub_signal.nsc
+                    sgs(i).subc(j).tx = sqrt(sub_signal.nsc)*signals{i}.FIELDX_TX(:,j);
+                    if (not(sub_signal.nsc == 1))
+                        sgs(i).subc(j).rx = signals{i}.SUB_FIELDX(:,j);
+                    else
+                        sgs(i).subc(j).rx = signals{i}.FIELDX(:,j);
+                    end
+                end
             end
-        end
+      
         
         ch_properties       = ch.getProperties;
         ch_properties.Nspan = link.Nspan;
         
-%         savefile = strcat('G','_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_WDM_',int2str(signal_prop.nc),'_',amp.type,'_nt_',int2str(signal_prop.nt));
-
-        savefile = 'my_sgs_IDA_wdm5_10x100_4sc';
+        savefile = horzcat('my_sgs_IDA_wdm5_10x100_',int2str(sub_signal.nsc),'sc');
         save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm');
+        
+        end
