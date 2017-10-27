@@ -130,7 +130,7 @@ oHf       = myfilter(oftype,sig.FN,obw,0);
 set(sig,'FIELDX',zfieldx(:,cch));
 
 %% Backpropagation
-% 
+
     if (strcmp(amptype,'Raman'))
         dsp.backpropagation(Pavg,sig,Nspan,'ssfm',1);
     else
@@ -138,16 +138,25 @@ set(sig,'FIELDX',zfieldx(:,cch));
     end
 
 %% Subcarrier Demultiplexing
- dsp.downsampling(sig); 
+
+ 
+ dsp.downsampling(sig);
+ set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
  if (not(sub_signal.nsc == 1))
-     oHf      = myfilter(oftype,sub_sig{1}.FN,obw,0);
-     set(sig,'FN',sub_sig{1}.FN);
+     oHf      = myfilter(oftype,sub_sig{cch}.FN,obw,0);
+     set(sig,'FN',sub_sig{cch}.FN);
      set(sig,'SYMBOLRATE',sub_signal.symbrate);
      set(sig,'NCH',sub_signal.nsc)
      set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
      set(sig, 'NT', sub_signal.nt);
-     Laser.GetLaserSource(Pavg,sig,lambda,0.10017);
-     [sig.SUB_FIELDX] = MuxDemux.Demux(sig,oHf,0,2);
+     if sub_signal.nsc == 4
+         Laser.GetLaserSource(Pavg,sig,lambda,0.10017);
+         [sig.SUB_FIELDX] = MuxDemux.Demux(sig,oHf,0,2);
+     else
+         Laser.GetLaserSource(Pavg,sig,lambda,0.4005);
+         [sig.SUB_FIELDX] = MuxDemux.Demux(sig,oHf,0,0);
+     end
+     
      dsp.scdownsampling(sig);
  end
  signals      = sig.getproperties();

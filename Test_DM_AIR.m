@@ -1,13 +1,15 @@
-        
+        clc;
+        clear all;
+
         HPLANCK = 6.62606896e-34;       % Planck's constant [J*s]
         CLIGHT = 299792458;             % speed of light [m/s]
-
+      
         
         link.Nspan       = 10;
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
-        link.sprop       = 1000;
+        link.sprop       = 100;
         link.nlindex     = 2.5e-20;
         link.disp        = 17;
         
@@ -27,7 +29,7 @@
         
         
         
-        pdbm                 = (-13:1:-4);
+        pdbm                 = (-9:1:-8);
         
         signal_prop.nt       = 8;
         signal_prop.nc       = 5;        

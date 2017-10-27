@@ -32,7 +32,7 @@ classdef MuxDemux
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);     % spacing in points
             
             if sig.NCH == 2
-                ndfn(1) = 0;
+                ndfn = ndfn/2;
             end
             
             zfieldx = fft(Ex);
@@ -67,7 +67,7 @@ classdef MuxDemux
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);           % spacing in points
             
             if sig.NCH == 2
-                ndfn(1) = 0;
+                ndfn = ndfn/2;
             end
             
             sig.FIELDX = fft(sig.FIELDX);
