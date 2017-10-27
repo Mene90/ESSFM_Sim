@@ -9,7 +9,7 @@
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
-        link.sprop       = 100;
+        link.sprop       = 1000;
         link.nlindex     = 2.5e-20;
         link.disp        = 17;
         
