@@ -66,21 +66,35 @@
                 sgs(i).sg = 1/sqrt(sub_signal.nsc);
                 sgs(i).Pu = pdbm(i);
                 
+                               
                 for j=1:sub_signal.nsc
-                    sgs(i).subc(j).tx(:,:,1) = sqrt(sub_signal.nsc)*signals{i}.FIELDX_TX(:,j);
-                    if ( pol == 2 )
-                        sgs(i).subc(j).tx(:,:,2) = sqrt(sub_signal.nsc)*signals{i}.FIELDY_TX(:,j);
-                    end
                     
-                    if (not(sub_signal.nsc == 1))
-                        sgs(i).subc(j).rx(:,:,1) = signals{i}.SUB_FIELDX(:,j);
+                    
+                    n_column = 200;
+                    rowsize = 409600/n_column/sub_signal.nsc;
+                    
+                    sgs(i).subc(j).tx = zeros(rowsize,n_column,pol);
+                    sgs(i).subc(j).rx = zeros(rowsize,n_column,pol);
+                           
+                    for h = 1:n_column
+                        p1  = (h*rowsize)-rowsize+1;
+                        p2  =  h*rowsize; 
+                        
+                        sgs(i).subc(j).tx(:,h,1) = sqrt(sub_signal.nsc)*signals{i}.FIELDX_TX(p1:p2,j);
                         if ( pol == 2 )
-                            sgs(i).subc(j).rx(:,:,2) = signals{i}.SUB_FIELDY(:,j);
+                            sgs(i).subc(j).tx(:,h,2) = sqrt(sub_signal.nsc)*signals{i}.FIELDY_TX(p1:p2,j);
                         end
-                    else
-                        sgs(i).subc(j).rx(:,:,1) = signals{i}.FIELDX(:,j);
-                        if ( pol == 2 )
-                            sgs(i).subc(j).rx(:,:,2) = signals{i}.FIELDY(:,j);
+                        
+                        if (not(sub_signal.nsc == 1))
+                            sgs(i).subc(j).rx(:,h,1) = signals{i}.SUB_FIELDX(p1:p2,j);
+                            if ( pol == 2 )
+                                sgs(i).subc(j).rx(:,h,2) = signals{i}.SUB_FIELDY(p1:p2,j);
+                            end
+                        else
+                            sgs(i).subc(j).rx(:,h,1) = signals{i}.FIELDX(p1:p2,j);
+                            if ( pol == 2 )
+                                sgs(i).subc(j).rx(:,h,2) = signals{i}.FIELDY(p1:p2,j);
+                            end
                         end
                     end
                 end

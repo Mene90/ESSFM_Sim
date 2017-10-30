@@ -183,6 +183,9 @@ set(sig,'FIELDY',zfieldy(:,cch));
      
      dsp.scdownsampling(sig);
  end
+ 
+ 
+ 
  signals      = sig.getproperties();
  SNRdB        = 10*log10(1/(symbrate*sub_signal.nsc)/10^9/ampli.N0);
  
