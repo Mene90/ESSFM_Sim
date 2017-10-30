@@ -1,4 +1,4 @@
-function [signals,SNRdB,ch] = Test_subcarrier(link,sp,signal,sub_signal,amp,pdbm,wdm,pls)
+function [signals,SNRdB,ch] = Test_subcarrier(link,sp,signal,sub_signal,amp,pdbm,wdm,pls,pol)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -79,27 +79,41 @@ for ii = 1:sig.NCH
     end
     
     for j = 1:sub_signal.nsc
-        [sub_cmapx(:,j)]  = Pattern.subc_gaussian(Nsymb,1/sqrt(sub_signal.nsc));
+        [sub_cmapx(:,j)] = Pattern.subc_gaussian(Nsymb,1/sqrt(sub_signal.nsc));
+        if(pol == 2)
+            [sub_cmapy(:,j)] = Pattern.subc_gaussian(Nsymb,1/sqrt(sub_signal.nsc));
+        end
         if (not(sub_signal.nsc == 1))
-         sub_Eoptx(:,j)   = Modulator.ApplyModulation([],sub_cmapx(:,j),sub_sig{ii},pls);
+            sub_Eoptx(:,j)   = Modulator.ApplyModulation([],sub_cmapx(:,j),sub_sig{ii},pls);
+            if(pol == 2 )
+                sub_Eopty(:,j) = Modulator.ApplyModulation([],sub_cmapy(:,j),sub_sig{ii},pls);
+            end
         else
-         sub_Eoptx(:,j)   = sub_cmapx(:,j);   
+            sub_Eoptx(:,j)   = sub_cmapx(:,j);
+            if (pol == 2 )
+                sub_Eopty(:,j) = sub_cmapy(:,j);
+            end
         end
     end
     
     set(sub_sig{ii},'FIELDX_TX' ,sub_cmapx);
-    set(sub_sig{ii},'SUB_FIELDX',sub_Eoptx);   
+    set(sub_sig{ii},'SUB_FIELDX',sub_Eoptx); 
+    if (pol == 2)
+        set(sub_sig{ii},'FIELDY_TX' ,sub_cmapy);
+        set(sub_sig{ii},'SUB_FIELDY',sub_Eopty);
+    end
 end
 
 %% Sub carrier Multiplexing
 if (not(sub_signal.nsc == 1))
     if sub_signal.nsc == 4
         for ii = 1:sig.NCH
-            MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,[],sub_sig{ii},2);
+            MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii},2);
+            
         end
     else
         for ii = 1:sig.NCH
-            MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,[],sub_sig{ii},0);
+            MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii},0);
         end
     end
 end
@@ -109,14 +123,20 @@ Laser.GetLaserSource(Pavg,sig,lambda,0.400835);
 if (not(sub_signal.nsc == 1))
     for ii = 1:sig.NCH
         Eoptx(:,ii) = Modulator.ApplyModulation([],sub_sig{ii}.FIELDX,sig,pls);
+        if(pol == 2 )
+            Eopty(:,ii) = Modulator.ApplyModulation([],sub_sig{ii}.FIELDY,sig,pls);
+        end
     end
 else
     for ii = 1:sig.NCH
         Eoptx(:,ii) = Modulator.ApplyModulation([],sub_sig{ii}.SUB_FIELDX,sig,pls);
+        if(pol == 2 )
+            Eopty(:,ii) = Modulator.ApplyModulation([],sub_sig{ii}.SUB_FIELDY,sig,pls);
+        end
     end
 end
 
-MuxDemux.Mux(Eoptx,[],sig,0);
+MuxDemux.Mux(Eoptx,Eopty,sig,0);
 
 %% Propagation
     for i = 1:Nspan
@@ -126,8 +146,9 @@ MuxDemux.Mux(Eoptx,[],sig,0);
 
 %% Channel Demultiplexing
 oHf       = myfilter(oftype,sig.FN,obw,0);    
-[zfieldx] = MuxDemux.Demux(sig,oHf,cch,0);
+[zfieldx,zfieldy] = MuxDemux.Demux(sig,oHf,cch,0);
 set(sig,'FIELDX',zfieldx(:,cch));
+set(sig,'FIELDY',zfieldy(:,cch));
 
 %% Backpropagation
 
@@ -141,26 +162,29 @@ set(sig,'FIELDX',zfieldx(:,cch));
 
  
  dsp.downsampling(sig);
- set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
+ set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX); 
+ set(sig, 'FIELDY_TX', sub_sig{cch}.FIELDY_TX);
+ 
  if (not(sub_signal.nsc == 1))
      oHf      = myfilter(oftype,sub_sig{cch}.FN,obw,0);
      set(sig,'FN',sub_sig{cch}.FN);
      set(sig,'SYMBOLRATE',sub_signal.symbrate);
      set(sig,'NCH',sub_signal.nsc)
      set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
+     set(sig, 'FIELDY_TX', sub_sig{cch}.FIELDY_TX);
      set(sig, 'NT', sub_signal.nt);
      if sub_signal.nsc == 4
          Laser.GetLaserSource(Pavg,sig,lambda,0.10017);
-         [sig.SUB_FIELDX] = MuxDemux.Demux(sig,oHf,0,2);
+         [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0,2);
      else
          Laser.GetLaserSource(Pavg,sig,lambda,0.4005);
-         [sig.SUB_FIELDX] = MuxDemux.Demux(sig,oHf,0,0);
+         [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0,0);
      end
      
      dsp.scdownsampling(sig);
  end
  signals      = sig.getproperties();
- SNRdB        = 10*log10(1/symbrate/10^9/ampli.N0);
+ SNRdB        = 10*log10(1/(symbrate*sub_signal.nsc)/10^9/ampli.N0);
  
 end
 

@@ -30,7 +30,7 @@ classdef MuxDemux
             deltafn = round(CLIGHT*(1/lamc-1./lamt),rn);    % absolute frequency spacing [GHz]
             minfreq = sig.FN(2)-sig.FN(1);                     % minfreq = 1/sig.NSYMB
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);     % spacing in points
-            
+             
             if sig.NCH == 2
                 ndfn = ndfn/2;
             end

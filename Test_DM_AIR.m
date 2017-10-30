@@ -29,10 +29,12 @@
         
         
         
-        pdbm                 = (-9:1:-8);
+        pdbm                 = (-13:1:-4);
         
         signal_prop.nt       = 8;
-        signal_prop.nc       = 5;        
+        signal_prop.nc       = 5;  
+        
+        pol                  = 2;
    
         
         wdm.cch              = 3;
@@ -41,9 +43,11 @@
         pls.bw      = 1.0;                        % duty cycle
         pls.ord     = 0;                          % pulse roll-off
         
-        snr0dB = zeros(length(pdbm),1);
+       
         
         for k = 1:length(nsc)
+            
+            snr0dB = zeros(length(pdbm),1);
             
             sub_signal.nsc       = nsc(k);
             sub_signal.nt        = nt(k);
@@ -57,17 +61,27 @@
             
             for i = 1:length(pdbm)
                 
-                [signals{i},snr0dB(i),ch] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls);
+                [signals{i},snr0dB(i),ch] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol);
                 sgs(i).snr0dB = snr0dB;
                 sgs(i).sg = 1/sqrt(sub_signal.nsc);
                 sgs(i).Pu = pdbm(i);
                 
                 for j=1:sub_signal.nsc
-                    sgs(i).subc(j).tx = sqrt(sub_signal.nsc)*signals{i}.FIELDX_TX(:,j);
+                    sgs(i).subc(j).tx(:,:,1) = sqrt(sub_signal.nsc)*signals{i}.FIELDX_TX(:,j);
+                    if ( pol == 2 )
+                        sgs(i).subc(j).tx(:,:,2) = sqrt(sub_signal.nsc)*signals{i}.FIELDY_TX(:,j);
+                    end
+                    
                     if (not(sub_signal.nsc == 1))
-                        sgs(i).subc(j).rx = signals{i}.SUB_FIELDX(:,j);
+                        sgs(i).subc(j).rx(:,:,1) = signals{i}.SUB_FIELDX(:,j);
+                        if ( pol == 2 )
+                            sgs(i).subc(j).rx(:,:,2) = signals{i}.SUB_FIELDY(:,j);
+                        end
                     else
-                        sgs(i).subc(j).rx = signals{i}.FIELDX(:,j);
+                        sgs(i).subc(j).rx(:,:,1) = signals{i}.FIELDX(:,j);
+                        if ( pol == 2 )
+                            sgs(i).subc(j).rx(:,:,2) = signals{i}.FIELDY(:,j);
+                        end
                     end
                 end
             end
@@ -75,8 +89,11 @@
         
         ch_properties       = ch.getProperties;
         ch_properties.Nspan = link.Nspan;
-        
-        savefile = horzcat('my_sgs_IDA_wdm5_10x100_',int2str(sub_signal.nsc),'sc');
+        if ( pol == 2 )
+            savefile = horzcat('my_sgs_dp_IDA_wdm5_10x100_',int2str(sub_signal.nsc),'sc');
+        else
+            savefile = horzcat('my_sgs_IDA_wdm5_10x100_',int2str(sub_signal.nsc),'sc');
+        end
         save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm');
         
         end

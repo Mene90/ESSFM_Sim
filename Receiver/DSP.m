@@ -136,11 +136,9 @@ classdef DSP < handle & matlab.mixin.SetGet
             end
         end     
         
-        function scdownsampling(~,sig)
-%          for i = 1:sig.NCH             
+        function scdownsampling(~,sig)        
                 set(sig,'SUB_FIELDX',sig.SUB_FIELDX(1:sig.NT:end,:));
-                set(sig,'SUB_FIELDY',sig.SUB_FIELDY(1:sig.NT:end,:));         
-%          end
+                set(sig,'SUB_FIELDY',sig.SUB_FIELDY(1:sig.NT:end,:)); 
         end
         
         function nlpnmitigation(~,sig) 
