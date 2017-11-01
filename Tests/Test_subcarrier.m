@@ -1,4 +1,4 @@
-function [signals,SNRdB,ch] = Test_subcarrier(link,sp,signal,sub_signal,amp,pdbm,wdm,pls,pol)
+function [signals,sub_carriers,SNRdB,ch] = Test_subcarrier(link,sp,signal,sub_signal,amp,pdbm,wdm,pls,pol)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -19,14 +19,14 @@ ch       = Channel(LL,alphadB,lambda,aeff,n2,D,S,Ns_prop);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         DSP parameters                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Ns_bprop = sp.bprop;                  % SSFM and ESSFM backpropagation steps
+Ns_bprop = sp.bprop;              % SSFM and ESSFM backpropagation steps
 dsp      = DSP(ch,Ns_bprop);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Signal parameters (wdm)                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 symbrate = signal.symbrate;           % symbol rate             [Gbaud]
 Ps_dBm   = pdbm;                      % Power vector            [dBm]
-Pavg     = 10.^(0.1*(Ps_dBm-30));    % Power vector            [W]
+Pavg     = 10.^(0.1*(Ps_dBm-30));     % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
 Nt       = signal.nt;                 % points x symbol
@@ -72,11 +72,14 @@ ampli  = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nspan);
 %% Subcarrier creation
 for ii = 1:sig.NCH
     set(sub_sig{ii},'POWER',Pavg);
-    if sub_signal.nsc == 4
-        Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.10017);
-    else
-        Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.4005);
-    end
+    Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0);
+%     if sub_signal.nsc == 4
+%         Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.10017);
+%     elseif sub_signal.nsc == 2
+%         Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.4005);
+%     else
+%         Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.0665);
+%     end
     
     for j = 1:sub_signal.nsc
         [sub_cmapx(:,j)] = Pattern.subc_gaussian(Nsymb,1/sqrt(sub_signal.nsc));
@@ -106,20 +109,27 @@ end
 
 %% Sub carrier Multiplexing
 if (not(sub_signal.nsc == 1))
-    if sub_signal.nsc == 4
-        for ii = 1:sig.NCH
-            MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii},2);
-            
-        end
-    else
-        for ii = 1:sig.NCH
-            MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii},0);
-        end
+    for ii = 1:sig.NCH
+        MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii});
+        sub_carriers{ii} = sub_sig{ii}.getproperties();
     end
+%     if (sub_signal.nsc == 4 || sub_signal.nsc == 6)
+%         for ii = 1:sig.NCH
+%             MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii},2);
+%             
+%         end
+%     else
+%         for ii = 1:sig.NCH
+%             MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii},0);
+%         end
+%     end
 end
 
+
+
 %% Channel Multiplexing
-Laser.GetLaserSource(Pavg,sig,lambda,0.400835);
+% Laser.GetLaserSource(Pavg,sig,lambda,0.400835);
+Laser.GetLaserSource(Pavg,sig,lambda,0);
 if (not(sub_signal.nsc == 1))
     for ii = 1:sig.NCH
         Eoptx(:,ii) = Modulator.ApplyModulation([],sub_sig{ii}.FIELDX,sig,pls);
@@ -136,17 +146,20 @@ else
     end
 end
 
-MuxDemux.Mux(Eoptx,Eopty,sig,0);
+MuxDemux.Mux(Eoptx,Eopty,sig);
 
 %% Propagation
-    for i = 1:Nspan
-        sing_span_propagation(ch,sig,'true')
-    end
-    AddNoise(ampli,sig);
+    
+    gpu_propagation(ch,Nspan,ampli,sig);
+    
+%     for i = 1:Nspan
+%         sing_span_propagation(ch,sig,'true')
+%     end
+%     AddNoise(ampli,sig);
 
 %% Channel Demultiplexing
 oHf       = myfilter(oftype,sig.FN,obw,0);    
-[zfieldx,zfieldy] = MuxDemux.Demux(sig,oHf,cch,0);
+[zfieldx,zfieldy] = MuxDemux.Demux(sig,oHf,cch);
 set(sig,'FIELDX',zfieldx(:,cch));
 set(sig,'FIELDY',zfieldy(:,cch));
 
@@ -173,13 +186,17 @@ set(sig,'FIELDY',zfieldy(:,cch));
      set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
      set(sig, 'FIELDY_TX', sub_sig{cch}.FIELDY_TX);
      set(sig, 'NT', sub_signal.nt);
-     if sub_signal.nsc == 4
-         Laser.GetLaserSource(Pavg,sig,lambda,0.10017);
-         [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0,2);
-     else
-         Laser.GetLaserSource(Pavg,sig,lambda,0.4005);
-         [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0,0);
-     end
+     Laser.GetLaserSource(Pavg,sig,lambda,0);
+     [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0);
+%      if sub_signal.nsc == 4
+% %          Laser.GetLaserSource(Pavg,sig,lambda,0.10017);
+%          Laser.GetLaserSource(Pavg,sig,lambda,0);
+%          [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0,2);
+%      else
+% %          Laser.GetLaserSource(Pavg,sig,lambda,0.4005);
+%          Laser.GetLaserSource(Pavg,sig,lambda,0);
+%          [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0,0);
+%      end
      
      dsp.scdownsampling(sig);
  end
@@ -187,7 +204,7 @@ set(sig,'FIELDY',zfieldy(:,cch));
  
  
  signals      = sig.getproperties();
- SNRdB        = 10*log10(1/(symbrate*sub_signal.nsc)/10^9/ampli.N0);
+ SNRdB        = 10*log10(1/(symbrate*sub_signal.nsc)/10^9/ampli.N0/Nspan);
  
 end
 

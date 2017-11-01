@@ -9,7 +9,7 @@ classdef MuxDemux
     methods (Static = true)
        
         
-        function [muxX,muxY] = Mux(Ex,Ey,sig,rn)
+        function [muxX,muxY] = Mux(Ex,Ey,sig)
             CLIGHT = 299792458;
             lamt = sig.LAMBDA;
             maxl = max(lamt);
@@ -26,14 +26,14 @@ classdef MuxDemux
                 end
             end
             
-            lamc = round(2*maxl*minl/(maxl+minl));             % central wavelength: 1/lamc = 0.5(1/maxl+1/minl)
-            deltafn = round(CLIGHT*(1/lamc-1./lamt),rn);    % absolute frequency spacing [GHz]
+            lamc    = round(2*maxl*minl/(maxl+minl));          % central wavelength: 1/lamc = 0.5(1/maxl+1/minl)
+            deltafn = CLIGHT*(1/lamc-1./lamt);                 % absolute frequency spacing [GHz]           
             minfreq = sig.FN(2)-sig.FN(1);                     % minfreq = 1/sig.NSYMB
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);     % spacing in points
              
-            if sig.NCH == 2
-                ndfn = ndfn/2;
-            end
+%             if sig.NCH == 2
+%                 ndfn = ndfn/2;
+%             end
             
             zfieldx = fft(Ex);
             zfieldy = fft(Ey);
@@ -56,19 +56,19 @@ classdef MuxDemux
             
         end
         
-        function [zfieldx,zfieldy] = Demux (sig,Hf,nch,rn)
+        function [zfieldx,zfieldy] = Demux (sig,Hf,nch)
             
             CLIGHT = 299792458;
             minfreq = sig.FN(2)-sig.FN(1);
             maxl=max(sig.LAMBDA);
             minl=min(sig.LAMBDA);
             lamc = round(2*maxl*minl/(maxl+minl));                   % central wavelength
-            deltafn = round(CLIGHT*(1/lamc-1./sig.LAMBDA),rn);       % frequency spacing
+            deltafn = CLIGHT*(1/lamc-1./sig.LAMBDA);                 % frequency spacing
             ndfn = round(deltafn./sig.SYMBOLRATE/minfreq);           % spacing in points
             
-            if sig.NCH == 2
-                ndfn = ndfn/2;
-            end
+%             if sig.NCH == 2
+%                 ndfn = ndfn/2;
+%             end
             
             sig.FIELDX = fft(sig.FIELDX);
             sig.FIELDY = fft(sig.FIELDY);
