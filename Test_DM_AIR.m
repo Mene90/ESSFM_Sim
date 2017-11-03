@@ -41,6 +41,8 @@
         pls.ord     = 0;                          % pulse roll-off
         
         SymbolsXSubcarrier = 102400;
+        
+        gpu = 1;
        
         for m = 1:length(Nspan)
             for k = 1:length(nsc)
@@ -62,7 +64,7 @@
                 
                 for i = 1:length(pdbm)
                     
-                    [signals{i},sub_carriers{i},snr0dB(i),ch{i}] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol);
+                    [signals{i},sub_carriers{i},snr0dB(i),ch{i}] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
                     
                     sgs(i).sg = 1/sqrt(sub_signal.nsc);
                     sgs(i).Pu = pdbm(i);
