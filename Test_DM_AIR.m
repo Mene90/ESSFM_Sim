@@ -62,7 +62,7 @@
                 
                 
                 
-                for i = 1:length(pdbm)
+                parfor i = 1:length(pdbm)
                     
                     [signals{i},sub_carriers{i},snr0dB(i),ch{i}] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
                     
