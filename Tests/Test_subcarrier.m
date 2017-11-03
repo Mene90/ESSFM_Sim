@@ -1,4 +1,4 @@
-function [signals,sub_carriers,SNRdB,ch] = Test_subcarrier(link,sp,signal,sub_signal,amp,pdbm,wdm,pls,pol)
+function [signals,sub_carriers,SNRdB,ch] = Test_subcarrier(link,sp,signal,sub_signal,amp,pdbm,wdm,pls,pol,gpu)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -105,6 +105,8 @@ for ii = 1:sig.NCH
         set(sub_sig{ii},'FIELDY_TX' ,sub_cmapy);
         set(sub_sig{ii},'SUB_FIELDY',sub_Eopty);
     end
+    
+    sub_carriers{ii} = sub_sig{ii}.getproperties();
 end
 
 %% Sub carrier Multiplexing
@@ -149,8 +151,11 @@ end
 MuxDemux.Mux(Eoptx,Eopty,sig);
 
 %% Propagation
-    
-    gpu_propagation(ch,Nspan,ampli,sig);
+    if gpu
+        gpu_propagation(ch,Nspan,ampli,sig);
+    else
+        propagation(ch,Nsapn,ampli,sig);
+    end
     
 %     for i = 1:Nspan
 %         sing_span_propagation(ch,sig,'true')
@@ -166,9 +171,9 @@ set(sig,'FIELDY',zfieldy(:,cch));
 %% Backpropagation
 
     if (strcmp(amptype,'Raman'))
-        dsp.backpropagation(Pavg,sig,Nspan,'ssfm',1);
+        dsp.backpropagation(Pavg,sig,Nspan,'ssfm',gpu);
     else
-        dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm',1);
+        dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm',gpu);
     end
 
 %% Subcarrier Demultiplexing
