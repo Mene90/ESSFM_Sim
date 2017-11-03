@@ -42,7 +42,7 @@
         
         SymbolsXSubcarrier = 102400;
         
-        gpu = 1;
+        gpu = 0;
        
         for m = 1:length(Nspan)
             for k = 1:length(nsc)

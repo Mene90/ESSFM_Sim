@@ -154,7 +154,7 @@ MuxDemux.Mux(Eoptx,Eopty,sig);
     if gpu
         gpu_propagation(ch,Nspan,ampli,sig);
     else
-        propagation(ch,Nsapn,ampli,sig);
+        propagation(ch,Nspan,ampli,sig);
     end
     
 %     for i = 1:Nspan

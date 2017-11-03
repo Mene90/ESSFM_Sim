@@ -67,7 +67,7 @@ classdef Channel < matlab.mixin.SetGet
             
             for i = 1:Nspan
                 AddNoise(ampli,sig);
-                sing_span_propagation(ch,sig,'true');
+                sing_span_propagation(ch,sig,1);
             end
             
             set(sig,'FIELDX', gather(get(sig,'FIELDX')));
@@ -81,7 +81,7 @@ classdef Channel < matlab.mixin.SetGet
         function propagation(ch,Nspan,ampli,sig)
             for i = 1:Nspan
                 AddNoise(ampli,sig);
-                sing_span_propagation(ch,sig,'false');
+                sing_span_propagation(ch,sig,0);
             end
         end
         
