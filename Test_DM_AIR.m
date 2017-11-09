@@ -1,11 +1,11 @@
-        clc;
+%         clc;
         clear all;
 
         HPLANCK = 6.62606896e-34;       % Planck's constant [J*s]
         CLIGHT = 299792458;             % speed of light [m/s]
       
         
-        Nspan            = [20,40,60,80,100];
+        Nspan            = [40,60,80,100];
         link.LL          = 0.6e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
@@ -42,7 +42,7 @@
         
         SymbolsXSubcarrier = 102400;
         
-        gpu = 0;
+        gpu = 1;
        
         for m = 1:length(Nspan)
             for k = 1:length(nsc)
@@ -60,11 +60,11 @@
                 signal_prop.symbrate = sub_signal.symbrate*sub_signal.nsc;
                 signal_prop.nsymb    = sub_signal.nsymb*sub_signal.nt;
                 
-                
-                
+                nsc(k)
+                tic
                 parfor i = 1:length(pdbm)
                     
-                    [signals{i},sub_carriers{i},snr0dB(i),ch{i}] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
+                    [signals{i},snr0dB(i),ch{i}] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
                     
                     sgs(i).sg = 1/sqrt(sub_signal.nsc);
                     sgs(i).Pu = pdbm(i);
@@ -114,8 +114,10 @@
                         %                             end
                         %                         end
                     end
+                    
+                    
                 end
-                
+                toc
                 for i = 1:length(pdbm)
                     sgs(i).snr0dB = zeros(length(pdbm),1);
                     sgs(i).snr0dB(1:i) = snr0dB(1:i);
@@ -128,6 +130,7 @@
                 else
                     savefile = horzcat('my_sgs_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
                 end
-                save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm','sub_carriers','-v7.3');
+                save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm','-v7.3');
+                clear signals ;
             end
         end
