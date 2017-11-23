@@ -103,9 +103,9 @@ classdef Channel < matlab.mixin.SetGet
             z    = ch.dz*(0:ch.nstep-1);            
             xi   = geff*exp(-ch.alphalin*z);
            
-            if(any(sig.FIELDY))
-                xi = xi*8/9;
-            end
+%             if(any(sig.FIELDY))
+%                 xi = xi*8/9;
+%             end
             
             if gpu
                betaz  = gpuArray(betaz);

@@ -76,12 +76,12 @@ classdef DSP < handle & matlab.mixin.SetGet
                 Leff = -k*(1-exp(dsp.ch.alphalin*dx))/dsp.ch.alphalin;
             end
             
-            z     = dsp.dz *(0:ceil(dsp.nstep)-1);
+            z     = dsp.dz *(0:-1);
             xi    = -dsp.ch.gamma*Leff*exp(dsp.ch.alphalin*z)*Pavg;
             
-            if(any(sig.FIELDY))
-                xi = xi*8/9;
-            end
+%             if(any(sig.FIELDY))
+%                 xi = xi*8/9;
+%             end
 
             fiberpartion = (dsp.nstep<1)*1+ (1-(dsp.nstep<1))*Nspan;
             
