@@ -73,13 +73,6 @@ ampli  = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nspan);
 for ii = 1:sig.NCH
     set(sub_sig{ii},'POWER',Pavg);
     Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0);
-%     if sub_signal.nsc == 4
-%         Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.10017);
-%     elseif sub_signal.nsc == 2
-%         Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.4005);
-%     else
-%         Laser.GetLaserSource(Pavg,sub_sig{ii},lambda,0.0665);
-%     end
     
     for j = 1:sub_signal.nsc
         [sub_cmapx(:,j)] = Pattern.subc_gaussian(Nsymb,1/sqrt(sub_signal.nsc));
@@ -115,19 +108,7 @@ if (not(sub_signal.nsc == 1))
         MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii});
         sub_carriers{ii} = sub_sig{ii}.getproperties();
     end
-%     if (sub_signal.nsc == 4 || sub_signal.nsc == 6)
-%         for ii = 1:sig.NCH
-%             MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii},2);
-%             
-%         end
-%     else
-%         for ii = 1:sig.NCH
-%             MuxDemux.Mux(sub_sig{ii}.SUB_FIELDX,sub_sig{ii}.SUB_FIELDY,sub_sig{ii},0);
-%         end
-%     end
 end
-
-
 
 %% Channel Multiplexing
 % Laser.GetLaserSource(Pavg,sig,lambda,0.400835);
@@ -156,11 +137,6 @@ MuxDemux.Mux(Eoptx,Eopty,sig);
     else
         propagation(ch,Nspan,ampli,sig);
     end
-    
-%     for i = 1:Nspan
-%         sing_span_propagation(ch,sig,'true')
-%     end
-%     AddNoise(ampli,sig);
 
 %% Channel Demultiplexing
 oHf       = myfilter(oftype,sig.FN,obw,0);    
@@ -193,16 +169,6 @@ set(sig,'FIELDY',zfieldy(:,cch));
      set(sig, 'NT', sub_signal.nt);
      Laser.GetLaserSource(Pavg,sig,lambda,0);
      [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0);
-%      if sub_signal.nsc == 4
-% %          Laser.GetLaserSource(Pavg,sig,lambda,0.10017);
-%          Laser.GetLaserSource(Pavg,sig,lambda,0);
-%          [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0,2);
-%      else
-% %          Laser.GetLaserSource(Pavg,sig,lambda,0.4005);
-%          Laser.GetLaserSource(Pavg,sig,lambda,0);
-%          [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0,0);
-%      end
-     
      dsp.scdownsampling(sig);
  end
  

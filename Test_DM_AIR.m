@@ -5,7 +5,7 @@
         CLIGHT = 299792458;             % speed of light [m/s]
       
         
-        Nspan            = [40];
+        Nspan            = [20,40,60,80,100];
         link.LL          = 0.6e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
@@ -23,8 +23,8 @@
 %         Gm1=(exp(al*link.LL)-1.d0);
 %         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        nsc                  = [1,2];
-        nt                   = [1,2];       
+        nsc                  = [1,2,4,6,8];
+        nt                   = [1,2,4,6,8];       
         
         pdbm                 = (-5:1:-1);
         
@@ -40,7 +40,7 @@
         pls.bw      = 1.0;                        % duty cycle
         pls.ord     = 0;                          % pulse roll-off
         
-        SymbolsXSubcarrier = 102400;
+        SymbolsXSubcarrier = 204800;
         
         gpu = 1;
        
@@ -62,7 +62,7 @@
                 
                 nsc(k)
                 tic
-                for i = 1:length(pdbm)
+                parfor i = 1:length(pdbm)
                     
                     [signals{i},snr0dB(i),ch{i}] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
                     
@@ -91,28 +91,6 @@
                                 sgs(i).subc(j).rx = reshape([signals{i}.FIELDX(:,j);signals{i}.FIELDY(:,j)],rowsize,n_column,2);
                             end
                         end
-                        
-                        %                         for h = 1:n_column
-                        %                             p1  = (h*rowsize)-rowsize+1;
-                        %                             p2  =  h*rowsize;
-                        %
-                        %                             sgs(i).subc(j).tx(:,h,1) = sqrt(sub_signal.nsc)*signals{i}.FIELDX_TX(p1:p2,j);
-                        %                             if ( pol == 2 )
-                        %                                 sgs(i).subc(j).tx(:,h,2) = sqrt(sub_signal.nsc)*signals{i}.FIELDY_TX(p1:p2,j);
-                        %                             end
-                        %
-                        %                             if (not(sub_signal.nsc == 1))
-                        %                                 sgs(i).subc(j).rx(:,h,1) = signals{i}.SUB_FIELDX(p1:p2,j);
-                        %                                 if ( pol == 2 )
-                        %                                     sgs(i).subc(j).rx(:,h,2) = signals{i}.SUB_FIELDY(p1:p2,j);
-                        %                                 end
-                        %                             else
-                        %                                 sgs(i).subc(j).rx(:,h,1) = signals{i}.FIELDX(p1:p2,j);
-                        %                                 if ( pol == 2 )
-                        %                                     sgs(i).subc(j).rx(:,h,2) = signals{i}.FIELDY(p1:p2,j);
-                        %                                 end
-                        %                             end
-                        %                         end
                     end
                     
                     
