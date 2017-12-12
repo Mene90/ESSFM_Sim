@@ -5,7 +5,7 @@ function [ signals,signals_dbp,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,a
 LL        = link.LL;              % length [m]
 alphadB   = link.attenuation;     % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
-n2        = 2.5e-20;              % nonlinear index [m^2/W]
+n2        = ling.n2;              % nonlinear index [m^2/W]
 lambda    = link.lambda;          % wavelength [nm] @ dispersion
 D         = link.disp;            % dispersion [ps/nm/km] @ wavelength
 S         = 0;                    % slope [ps/nm^2/km] @ wavelength
@@ -25,16 +25,16 @@ D         = -100;                       % dispersion [ps/nm/km] @ wavelength
 S         = 0;                          % slope [ps/nm^2/km] @ wavelength
 comp_LL   = -link.disp*link.LL/1e3/D*1e3;    % comp. fiber length [m];           
 
-Ns_prop   = 4;                           % number of SSFM propagation step
+Ns_prop   = 1;                           % number of SSFM propagation step
 
 comp_ch   = Channel(comp_LL,comp_alphadB,lambda,aeff,n2,D,S,Ns_prop);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         DSP parameters                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Ns_bprop = sp.bprop;                % SSFM and ESSFM backpropagation steps
-Ns_bprop_comp = 4;
+Ns_bprop_comp = 1;
 dsp       = DSP(ch,Ns_bprop);
-dsp_dbp   = DSP(ch,Ns_prop);
+dsp_dbp   = DSP(ch,link.sprop);
 dsp_comp  = DSP(comp_ch,Ns_bprop_comp);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                      Signal parameters                                 %
@@ -53,7 +53,7 @@ set(sig,'POWER',Pavg);
 Gerbio    = alphadB*LL*1e-3+comp_alphadB*comp_LL*1e-3;
 etasp     = amp.etasp;
 amptype   = amp.type;
-ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,amptype);
+ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nspan);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Pulse parameters                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,50 +71,65 @@ E      = Laser.GetLaserSource(Pavg,sig,lambda);
 if(distribution == 'HG')
     [cmapx_tx]  = Pattern.halfgaussian(Nsymb);
     Eoptx       = Modulator.ApplyModulation(E,cmapx_tx,sig,pls);
-    %     [cmapy_tx] = Pattern.halfgaussian(Nsymb);
 elseif(distribution == 'G')
     [cmapx_tx] = Pattern.gaussian(Nsymb);
     Eoptx      = Modulator.ApplyModulation(E,cmapx_tx,sig,pls);
-    %     [cmapy_tx] = Pattern.gaussian(Nsymb);
 end
 
-set(sig,'FIELDX'    ,Eoptx);
-set(sig,'FIELDX_TX' ,Eoptx);
-%      set(sig,'FIELDX'    ,cmapy_tx);
-%      set(sig,'FIELDY_TX' ,cmapy_tx);
+% set(sig,'FIELDX'    ,Eoptx);
+% set(sig,'FIELDX_TX' ,Eoptx);
+set(sig,'FIELDX'    ,cmapy_tx);
+set(sig,'FIELDY_TX' ,cmapy_tx);
 
 if (strcmp(compensation,'inline'))
-    set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
-    set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
+    
+    if gpu
+        set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
+        set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
+    end
     
     %propagation(ch,Nspan,ampli,sig);
+    
     for i = 1:Nspan
+        sing_span_propagation(ch,sig,gpu);
+        sing_span_propagation(comp_ch,sig,gpu);
         AddNoise(ampli,sig);
-        sing_span_propagation(ch,sig,'true');
-        sing_span_propagation(comp_ch,sig,'true');
     end
     
-        
-    set(sig,'FIELDX', gather(get(sig,'FIELDX')));
-    set(sig,'FIELDY', gather(get(sig,'FIELDY')));
+    if gpu
+        set(sig,'FIELDX', gather(get(sig,'FIELDX')));
+        set(sig,'FIELDY', gather(get(sig,'FIELDY')));
+    end
     
     %backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm');
+    
     sig_dbp = copy(sig);
-    for i = 1:Nspan            
+    
+    for i = 1:Nspan
         backpropagation(dsp_comp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);
-        backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);    
+        backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,1,'ssfm',gpu);
     end
-
-else  
-    gpu_propagation(ch,Nspan,ampli,sig);
+   
+else 
+    
+    if gpu
+        gpu_propagation(ch,Nspan,ampli,sig);
+    else
+        propagation(ch,Nspan,ampli,sig);
+    end
+    
     sig_dbp = copy(sig);
     
     backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,compensation,gpu)
     backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,Nspan,'ssfm',gpu);
+
 end
 
 dsp.matchedfilter(sig,Hf);
-% dsp.downsampling(sig);  
+dsp.downsampling(sig)
+
+dsp.matchedfilter(sig_dbp,Hf);
+dsp.downsampling(sig_dbp);
 
 signals     = sig.getproperties();
 signals_dbp = sig_dbp.getproperties();

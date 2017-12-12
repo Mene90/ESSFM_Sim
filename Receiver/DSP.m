@@ -28,30 +28,32 @@ classdef DSP < handle & matlab.mixin.SetGet
         function setessfmcoeff(dsp,NC,Pavg,Nsymb,Nt,symbrate,pls,ampli,Nspan)
             
             Loss    = 10^(-(dsp.ch.alphadB*dsp.ch.Lf*1e-3)*0.1);
-            C0      = zeros(NC,1);
-            C0(1,1) = 1;
+            C0      = zeros(2*NC+1,2*NC+1);
+            C0(NC+1,NC+1) = 1;
             options = optimset('Algorithm','trust-region-reflective',...
                                'Display','off','Jacobian','off',...
                                'DerivativeCheck','off','TolFun',...
                                 1e-13,'TolX',1e-13);
                    
                             
-            sig = Signal(Nsymb,Nt,symbrate);
-            Hf  = transpose(filt(pls,sig.FN));
-            
-           [patx(:,1), patmatx] = Pattern.debruijn(1,4,Nsymb);
-           [paty(:,1), patmaty] = Pattern.debruijn(2,4,Nsymb);
+            sig = Signal(Nsymb,Nt,symbrate,dsp.ch.lambda,1);
+            Hf  = filt(pls,sig.FN);
+%             seed1 = round((50-1).*rand(1,1) + 1);
+%             seed2 = round((50-1).*rand(1,1) + 1);
+%             disp(horzcat(int2str(seed1),';',int2str(seed2)));
+           [patx(:,1), patmatx] = Pattern.debruijn(37,4,Nsymb);
+           [paty(:,1), patmaty] = Pattern.debruijn(6,4,Nsymb);
            
-           E                    = Laser.GetLaserSource(Pavg, Nsymb * Nt);
+           E                    = Laser.GetLaserSource(Pavg,sig,dsp.ch.lambda,0);
            
            set(sig,'POWER'    ,Pavg);
-           set(sig,'FIELDX'   ,Modulator.ApplyModulation(E, 2*patmatx-1, sig, pls));
-           set(sig,'FIELDY'   ,Modulator.ApplyModulation(E, 2*patmaty-1, sig, pls));
-           set(sig,'FIELDX_TX',Modulator.ApplyModulation(E, 2*patmatx-1, sig, pls));
-           set(sig,'FIELDY_TX',Modulator.ApplyModulation(E, 2*patmaty-1, sig, pls));
+           set(sig,'FIELDX'   ,Modulator.ApplyModulation(E, 1./sqrt(2.)*((2*patmatx(:,1)-1)+1i*(2*patmatx(:,2)-1)), sig, pls));
+           set(sig,'FIELDY'   ,Modulator.ApplyModulation(E, 1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2*patmaty(:,2)-1)), sig, pls));
+           set(sig,'FIELDX_TX',1./sqrt(2.)*((2*patmatx(:,1)-1)+1i*(2*patmatx(:,2)-1)));
+           set(sig,'FIELDY_TX',1./sqrt(2.)*((2*patmaty(:,1)-1)+1i*(2*patmaty(:,2)-1)));
            
            
-           dsp.ch.propagate(Nspan,ampli,sig);
+           dsp.ch.gpu_propagation(Nspan,ampli,sig);
            
            fmin = @(C) essfm_coeff_opt(sig,dsp,C,Nspan,Loss,Hf);
            [dsp.C,err] = lsqnonlin(fmin,C0,[],[],options);
@@ -106,6 +108,10 @@ classdef DSP < handle & matlab.mixin.SetGet
                     ssfm(dsp,sig,xi,Nspan,betaz,r);
                 end
             elseif strcmpi(type,'essfm')
+                for i=1:fiberpartion
+                    essfm(dsp,sig,xi,Nspan,betaz,r);
+                end
+            elseif strcmpi(type,'essfm_quadratic')
                 for i=1:fiberpartion
                     essfm(dsp,sig,xi,Nspan,betaz,r);
                 end
@@ -188,7 +194,7 @@ classdef DSP < handle & matlab.mixin.SetGet
         function essfm(dsp,sig,xi,Nspan,betaz,r)   
              
             steps = dsp.nstep;
-            if(dsp.nstep <= 1)
+            if(dsp.nstep < 1)
                 steps = Nspan * dsp.ch.Lf/dsp.dz;
                 xi    = ones(1,steps)*xi;
             end          
@@ -214,6 +220,37 @@ classdef DSP < handle & matlab.mixin.SetGet
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             lin_step(dsp,-betaz*r,sig);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
+        end
+        
+        function essfm_quadratic(dsp,sig,xi,Nspan,betaz,r)
+            
+            steps = dsp.nstep;
+            if(dsp.nstep < 1)
+                steps = Nspan * dsp.ch.Lf/dsp.dz;
+                xi    = ones(1,steps)*xi;
+            end
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                           HALF DZ GVD                      %
+            %                                DZ SPM                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            lin_step(dsp,-betaz*(1-r),sig);
+            nl_essfm_quadratic_step(dsp,-xi(1)*dsp.C,sig);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            for i=2:steps
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %                           DZ GVD                       %
+                %                           DZ SPM                       %
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                lin_step(dsp,-betaz,sig);
+                nl_essfm_quadratic_step(dsp,-xi(i)*dsp.C,sig);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            end
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %                      LAST HALF DZ GVD                      %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            lin_step(dsp,-betaz*r,sig);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
         function nl_ssfm_step(~,xi,sig)  
@@ -244,6 +281,25 @@ classdef DSP < handle & matlab.mixin.SetGet
             
         end
         
+        function nl_essfm_quadratic_step(~,C,sig)
+            
+            M   = length(sig.FIELDX);
+            N   = (length(diag(C))-1)/2;
+            per_x = [sig.FIELDX(M-N+1:M);sig.FIELDX;sig.FIELDX(1:N)];
+            per_y = [sig.FIELDY(M-N+1:M);sig.FIELDY;sig.FIELDY(1:N)];
+            CC    = C + triu(C,1);
+            
+            theta = ones(M,1);
+            
+            for k = 1:M
+                theta(k) = per_x(k:k+2*N)*CC*per_x(k:k+2*N)';
+            end
+            
+            set(sig,'FIELDX', sig.FIELDX.*exp(1i*theta));
+            set(sig,'FIELDY', sig.FIELDY.*exp(1i*theta));
+        
+        end
+        
         function lin_step(~,betaxdz,sig)  
                 if (not(all(betaxdz==0)))
                     set(sig,'FIELDX',ifft( fft(sig.FIELDX).* exp(-1i*betaxdz)));
@@ -258,15 +314,18 @@ function [ f ] = essfm_coeff_opt(sig,dsp,C,Nspan,Loss,Hf)
 
         rx_sig = copy(sig);
         set(dsp,'C',C);
-        dsp.backpropagation(get(rx_sig,'POWER')*Loss,rx_sig,Nspan,'essfm');
+        dsp.backpropagation(get(rx_sig,'POWER')*Loss,rx_sig,Nspan,'essfm_quadratic',1);
         dsp.matchedfilter(rx_sig,Hf);
+        dsp.downsampling(rx_sig);
         dsp.nlpnmitigation(rx_sig);
         
         X = [real(get(rx_sig,'FIELDX')-get(rx_sig,'FIELDX_TX')).';...
              imag(get(rx_sig,'FIELDX')-get(rx_sig,'FIELDX_TX')).'];
         Y = [real(get(rx_sig,'FIELDY')-get(rx_sig,'FIELDY_TX')).';... 
-             imag(get(rx_sig,'FIELDY')-get(rx_sig,'FIELDY_TX')).'];         
+             imag(get(rx_sig,'FIELDY')-get(rx_sig,'FIELDY_TX')).'];   
+         
         f = [X;Y];
+%         f = sqrt(sum(g.^2,1));
         
         return
         

@@ -105,10 +105,11 @@ switch n
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.disp        = 3;
+        link.n2          = 2.5e-20;
         link.lambda      = 1550;
-        link.sprop       = 25;
+        link.sprop       = 20;
         
-        sp.bprop    = 2;
+        sp.bprop    = 1;
         
         amp.etasp   = 2;
         amp.type    = 'EDFA';
@@ -135,7 +136,7 @@ switch n
         C       =   log2(1+SNR);
         SNR_dB  =   10*log10(SNR);
         
-        gpu     =  1;
+        gpu     =  0;
         
         for j = 1:length(compensation)
             for i=1:length(pdbm)
