@@ -119,7 +119,7 @@ switch n
         Gm1 = (exp(al*link.LL)-1.d0);
         N0  = link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
 
-        signal_prop.nsymb    = 2^20;
+        signal_prop.nsymb    = 2^18;
         signal_prop.nt       = 2;
         signal_prop.symbrate = 10;
         
@@ -146,7 +146,7 @@ switch n
             ch_properties       = ch.getProperties;
             ch_properties.Nspan = link.Nspan;
             
-            savefile        = char(strcat('Test_Results/Test3',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'roll_02'));
+            savefile        = char(strcat('TestResults/Test3/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'roll_02'));
             
             save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','sig_dbp','pls','-v7.3');
         end

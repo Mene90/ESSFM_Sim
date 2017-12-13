@@ -5,7 +5,7 @@ function [ signals,signals_dbp,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,a
 LL        = link.LL;              % length [m]
 alphadB   = link.attenuation;     % attenuation [dB/km]
 aeff      = 80;                   % effective area [um^2]
-n2        = ling.n2;              % nonlinear index [m^2/W]
+n2        = link.n2;              % nonlinear index [m^2/W]
 lambda    = link.lambda;          % wavelength [nm] @ dispersion
 D         = link.disp;            % dispersion [ps/nm/km] @ wavelength
 S         = 0;                    % slope [ps/nm^2/km] @ wavelength
@@ -78,8 +78,8 @@ end
 
 % set(sig,'FIELDX'    ,Eoptx);
 % set(sig,'FIELDX_TX' ,Eoptx);
-set(sig,'FIELDX'    ,cmapy_tx);
-set(sig,'FIELDY_TX' ,cmapy_tx);
+set(sig,'FIELDX'    ,Eoptx);
+set(sig,'FIELDX_TX' ,cmapx_tx);
 
 if (strcmp(compensation,'inline'))
     
