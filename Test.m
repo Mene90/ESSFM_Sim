@@ -136,7 +136,7 @@ switch n
         C       =   log2(1+SNR);
         SNR_dB  =   10*log10(SNR);
         
-        gpu     =  0;
+        gpu     =   0;
         
         for j = 1:length(compensation)
             for i=1:length(pdbm)
@@ -181,7 +181,7 @@ switch n
         
        pls.shape   = 'RRC';                     % Shape type
        pls.bw      = 1;                         % duty cycle
-       pls.ord     = 0.1;                       % pulse roll-off
+       pls.ord     = 0.2;                       % pulse roll-off
         
         ch_properties.Nspan = link.Nspan;
         
