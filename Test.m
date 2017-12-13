@@ -146,7 +146,7 @@ switch n
             ch_properties       = ch.getProperties;
             ch_properties.Nspan = link.Nspan;
             
-            savefile        = char(strcat('TestResults/Test3/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'roll_02'));
+            savefile        = char(strcat('Test_Results/Test3/',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'roll_02'));
             
             save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','sig_dbp','pls','-v7.3');
         end
@@ -184,7 +184,7 @@ switch n
        pls.ord     = 0.2;                       % pulse roll-off
         
         ch_properties.Nspan = link.Nspan;
-        gpu = 1;
+        gpu = 0;
         
         for j = 1:length(amp.type)
             for i=1:length(pdbm)
