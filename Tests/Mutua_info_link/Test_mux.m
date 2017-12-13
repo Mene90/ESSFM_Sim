@@ -1,4 +1,4 @@
-function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm,wdm,pls,Nsc)
+function [signals,SNRdB,ch] = Test_mux(link,sp,signal,amp,pdbm,wdm,pls,gpu)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,7 +30,7 @@ Pavg     = 10.^(0.1*(Ps_dBm -30));    % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
 Nt       = signal.nt;                 % points x symbol
-sig      = Signal(Nsymb*4,Nt,symbrate,lambda,signal.nc);
+sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         WDM parameters                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -70,33 +70,44 @@ oHf       = myfilter(oftype,sig.FN,obw,0);      % Remember that the in the lowpa
     set(sig,'POWER',Pavg);
     
     ampli  = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nspan);
-    E      = Laser.GetLaserSource(Pavg,sig,lambda,0.400835);
+    E      = Laser.GetLaserSource(Pavg,sig,lambda,0); %0.400835
     
     for ii = 1:sig.NCH
         
         [cmapx(:,ii)]   = Pattern.gaussian(Nsymb);
-        Eoptx(:,ii)    = Modulator.ApplyModulation(subE,cmapx(:,ii),sig,pls);
+        Eoptx(:,ii)     = Modulator.ApplyModulation(E,cmapx(:,ii),sig,pls);
         
     end
     
     set(sig,'FIELDX_TX',cmapx);
-    MuxDemux.Mux(Eoptx,[],sig,0);
+    MuxDemux.Mux(Eoptx,[],sig);
+    
+   
+    if gpu
+        set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
+        set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
+    end
     
     for i = 1:Nspan
-        sing_span_propagation(ch,sig,'true')
+        sing_span_propagation(ch,sig,gpu);
+        AddNoise(ampli,sig);
     end
-    AddNoise(ampli,sig);
-%     gpu_propagation(ch,Nspan,ampli,sig);
+    
+     if gpu
+        set(sig,'FIELDX', gather(get(sig,'FIELDX')));
+        set(sig,'FIELDY', gather(get(sig,'FIELDY')));
+     end
+    
 
-    [zfieldx] = MuxDemux.Demux(sig,oHf,cch,0);
+    [zfieldx] = MuxDemux.Demux(sig,oHf,0);
     
     set(sig,'FIELDX',zfieldx(:,cch));
     set(sig,'FIELDX_TX',sig.FIELDX_TX(:,cch));
     
     if (strcmp(amptype,'Raman'))
-        dsp.backpropagation(Pavg,sig,Nspan,'ssfm',1);
+        dsp.backpropagation(Pavg,sig,Nspan,'ssfm',gpu);
     else
-        dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm',1);
+        dsp.backpropagation(Pavg*10^(-Gerbio*0.1),sig,Nspan,'ssfm',gpu);
     end
 
 %    dsp.matchedfilter(sig,Hf);
