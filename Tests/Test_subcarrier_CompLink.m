@@ -85,14 +85,17 @@ amptype   = amp.type;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Hf        = filt(pls,sig.FN);
+% Hf        = filt(pls,sig.FN);
 
 set(sig,'POWER',Pavg);
 
 Pu1dB = pdbm-4;
 Pu1   = 10.^(0.1*(Pu1dB-30));
-ampli01   = Ampliflat(Pu1,ch,Gerbio01,etasp01,amptype,Nspan);
-ampli02   = Ampliflat(Pavg,ch,Gerbio02,etasp02,amptype,Nspan);
+
+% ampli02   = Ampliflat(Pavg,comp_ch,Gerbio02,etasp02,amptype,Nspan);
+
+Gm1       = (10^(Gerbio01*0.1)-1.d0)/Pu1 + (10^(Gerbio02*0.1)-1.d0)/Pavg ;
+ampli01   = Ampliflat(Pu1,ch,Gm1,etasp01,amptype,Nspan);
 
 %% Subcarrier creation
 for ii = 1:sig.NCH
@@ -109,9 +112,11 @@ for ii = 1:sig.NCH
                 sub_Eopty(:,j) = Modulator.ApplyModulation([],sub_cmapy(:,j),sub_sig{ii},pls);
             end
         else
-            sub_Eoptx(:,j)   = sub_cmapx(:,j);
+%             sub_Eoptx(:,j)   = sub_cmapx(:,j);
+            sub_Eoptx(:,j) = Modulator.ApplyModulation([],sub_cmapx(:,j),sub_sig{ii},pls);
             if (pol == 2 )
-                sub_Eopty(:,j) = sub_cmapy(:,j);
+                sub_Eopty(:,j) = Modulator.ApplyModulation([],sub_cmapy(:,j),sub_sig{ii},pls);
+%                 sub_Eopty(:,j) = sub_cmapy(:,j);
             end
         end
     end
@@ -137,7 +142,6 @@ end
 
 
 %% Channel Multiplexing
-% Laser.GetLaserSource(Pavg,sig,lambda,0.400835);
 Laser.GetLaserSource(Pavg,sig,lambda,0);
 if (not(sub_signal.nsc == 1))
     for ii = 1:sig.NCH
@@ -166,6 +170,8 @@ end
 %     else
 %         propagation(ch,Nspan,ampli,sig);
 %     end
+
+   
     
    set(sig,'FIELDX', gpuArray(complex(get(sig,'FIELDX'))));
    set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
@@ -173,18 +179,19 @@ end
     for i = 1:Nspan
         set(sig,'POWER',Pavg);
         sing_span_propagation(ch,sig,gpu);
-        AddNoise(ampli01,sig);
+%         AddNoise(ampli01,sig);
         set(sig,'POWER',Pu1);
         sing_span_propagation(comp_ch,sig,gpu);
-        AddNoise(ampli02,sig);        
+%         AddNoise(ampli02,sig);        
     end
     
+    AddNoise(ampli01,sig);
     set(sig,'POWER',Pavg);
     set(sig,'FIELDX', gather(get(sig,'FIELDX')));
     set(sig,'FIELDY', gather(get(sig,'FIELDY')));
             
-%     g = gpuDevice(1);
-%     reset(g);
+    g = gpuDevice(1);
+    reset(g);
     
 %     for i = 1:Nspan
 %         sing_span_propagation(ch,sig,'true')
@@ -205,7 +212,9 @@ set(sig,'FIELDY',zfieldy(:,cch));
     set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
  
     for i = 1:Nspan
+        set(sig,'POWER',Pu1);
         backpropagation(dsp_comp,Pu1*10^(-Gerbio02*0.1),sig,1,'ssfm',0);
+        set(sig,'POWER',Pavg);
         backpropagation(dsp,Pavg*10^(-Gerbio01*0.1),sig,1,'ssfm',0);        
     end
     
@@ -236,11 +245,14 @@ set(sig,'FIELDY',zfieldy(:,cch));
      set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
      set(sig, 'FIELDY_TX', sub_sig{cch}.FIELDY_TX);
      set(sig, 'NT', sub_signal.nt);
-     Laser.GetLaserSource(Pavg,sig,lambda,0);
+     Laser.GetLaserSource(Pavg,sig,lambda,0); 
+%      Hf        = filt(pls,sig.FN);
      if(pol == 2)
          [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0);
+%          dsp.scmatchedfilter(sig,Hf);
      else
          [sig.SUB_FIELDX] = MuxDemux.Demux(sig,oHf,0);
+%          dsp.scmatchedfilter(sig,Hf);
      end
      dsp.scdownsampling(sig);
  end

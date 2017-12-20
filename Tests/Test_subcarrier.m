@@ -163,7 +163,7 @@ set(sig,'FIELDY',zfieldy(:,cch));
      oHf      = myfilter(oftype,sub_sig{cch}.FN,obw,0);
      set(sig,'FN',sub_sig{cch}.FN);
      set(sig,'SYMBOLRATE',sub_signal.symbrate);
-     set(sig,'NCH',sub_signal.nsc)
+     set(sig,'NCH',sub_signal.nsc);
      set(sig, 'FIELDX_TX', sub_sig{cch}.FIELDX_TX);
      set(sig, 'FIELDY_TX', sub_sig{cch}.FIELDY_TX);
      set(sig, 'NT', sub_signal.nt);

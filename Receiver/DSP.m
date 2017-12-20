@@ -129,6 +129,13 @@ classdef DSP < handle & matlab.mixin.SetGet
             
         
         end
+        
+        function scmatchedfilter(~,sig,Hf) 
+            for i = 1:size(sig.SUB_FIELDX,2)
+                set(sig,'FIELDX', ifft(fft(sig.SUB_FIELDX(:,i)).*Hf));
+                set(sig,'FIELDY', ifft(fft(sig.SUB_FIELDY(:,i)).*Hf));
+            end
+        end
                 
         function matchedfilter(~,sig,Hf)            
             set(sig,'FIELDX', ifft(fft(sig.FIELDX).*Hf));

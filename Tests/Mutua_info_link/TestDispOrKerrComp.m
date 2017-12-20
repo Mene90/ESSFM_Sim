@@ -1,4 +1,4 @@
-function [ signals,signals_dbp,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,amp,pdbm,distribution,compensation,gpu,pls)
+function [ signals,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,amp,pdbm,distribution,compensation,gpu,pls)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -18,7 +18,7 @@ ch        = Channel(LL,alphadB,lambda,aeff,n2,D,S,Ns_prop);
 %                     Comp Link parameters                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 comp_alphadB   = 0;                     % attenuation [dB/km]
-aeff      = 20;                         % effective area [um^2]
+aeff      = 30;                         % effective area [um^2]
 n2        = 0;                          % nonlinear index [m^2/W]
 lambda    = link.lambda;                % wavelength [nm] @ dispersion
 D         = -100;                       % dispersion [ps/nm/km] @ wavelength
@@ -54,12 +54,6 @@ Gerbio    = alphadB*LL*1e-3+comp_alphadB*comp_LL*1e-3;
 etasp     = amp.etasp;
 amptype   = amp.type;
 ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nspan);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                         Pulse parameters                               %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% pls.shape   = 'RC';                      % Shape type
-% pls.bw      = 1;                         % duty cycle
-% pls.ord     = pulse.ord;                   % pulse roll-off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,13 +114,13 @@ else
     
     sig_dbp = copy(sig);
     
-    backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,compensation,gpu)
+    backpropagation(dsp,Pavg*10^(-Gerbio*0.1),sig,Nspan,compensation,gpu);
     backpropagation(dsp_dbp,Pavg*10^(-Gerbio*0.1),sig_dbp,Nspan,'ssfm',gpu);
 
 end
 
 dsp.matchedfilter(sig,Hf);
-dsp.downsampling(sig)
+dsp.downsampling(sig);
 
 dsp.matchedfilter(sig_dbp,Hf);
 dsp.downsampling(sig_dbp);
