@@ -5,8 +5,8 @@
         CLIGHT = 299792458;             % speed of light [m/s]
       
         
-        Nspan            = [20,40,60,80,100];
-        link.LL          = 0.6e5;
+        Nspan            = [10];
+        link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
         link.sprop       = 1000;
@@ -15,18 +15,15 @@
         
         sp.bprop    = 100;
         
-        amp.type    = 'EDFA';
-        amp.etasp   = 1.6;
+        amp.type    = 'Raman';
+        amp.etasp   = 1;
         amp.Fn      = 10*log10(2*amp.etasp);
-        
-%         al =link.attenuation*0.230258509299405*1e-3;
-%         Gm1=(exp(al*link.LL)-1.d0);
-%         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
+
         
         nsc                  = [1,2,4,6,8];
         nt                   = [1,2,4,6,8];       
         
-        pdbm                 = (-5:1:-1);
+        pdbm                 = (-6:1:0);
         
         signal_prop.nt       = 8;
         signal_prop.nc       = 5;  
@@ -40,7 +37,7 @@
         pls.bw      = 1.0;                        % duty cycle
         pls.ord     = 0;                          % pulse roll-off
         
-        SymbolsXSubcarrier = 204800;
+        SymbolsXSubcarrier = 102400;
         
         gpu = 1;
        
@@ -103,11 +100,17 @@
                 
                 ch_properties       = ch{1}.getProperties;
                 ch_properties.Nspan = link.Nspan;
-                if ( pol == 2 )
-                    savefile = horzcat('contTest_my_sgs_dp_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
+                 if ( pol == 2 )
+                    savefile = horzcat('my_sgs_dp_IDA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
                 else
-                    savefile = horzcat('contTest_my_sgs_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
+                    savefile = horzcat('my_sgs_IDA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
                 end
+                
+%                 if ( pol == 2 )
+%                     savefile = horzcat('contTest_my_sgs_dp_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
+%                 else
+%                     savefile = horzcat('contTest_my_sgs_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
+%                 end
                 save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm','-v7.3');
                 clear signals ;
             end

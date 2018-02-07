@@ -1,4 +1,3 @@
-%         clc;
         clear all;
 
         HPLANCK = 6.62606896e-34;       % Planck's constant [J*s]
@@ -9,35 +8,32 @@
         link.LL          = 0.6e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
-        link.sprop       = 100;
+        link.sprop       = 1000;
         link.nlindex     = 2.5e-20;
         link.disp        = 17;
         
-        sp.bprop    = 10;
+        sp.bprop         = 100;
         
         amp.type      = 'EDFA';
         amp.etasp01   = 1.6;
         amp.etasp02   = 1.6;
-%         amp.Fn        = 10*log10(2*amp.etasp);
+        amp.Fn        = 10*log10(2*amp.etasp);
         
-%         al =link.attenuation*0.230258509299405*1e-3;
-%         Gm1=(exp(al*link.LL)-1.d0);
-%         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        nsc                  = [2];
-        nt                   = [2];       
+        nsc                  = [1,2];
+        nt                   = [1,2];       
         
-        pdbm                 = (-10:1:-6);
+        pdbm                 = (-11:1:-7);
         
         signal_prop.nt       = 8;
         signal_prop.nc       = 5;  
         
-        pol                  = 1;
+        pol                  = 2;
    
         
         wdm.cch              = 3;
         
-        pls.shape   = 'RC';                       % Shape type
+        pls.shape   = 'RRC';                       % Shape type
         pls.bw      = 1.0;                        % duty cycle
         pls.ord     = 0;                          % pulse roll-off
         
@@ -63,7 +59,7 @@
                 
                 nsc(k)
                 tic
-                for i = 1:length(pdbm)
+                parfor i = 1:length(pdbm)
                     
                     [signals{i},snr0dB(i),ch{i}] = Test_subcarrier_CompLink(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
                     
