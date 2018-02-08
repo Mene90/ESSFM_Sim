@@ -5,7 +5,7 @@
         CLIGHT = 299792458;             % speed of light [m/s]
       
         
-        Nspan            = [20,40,60,80,100];
+        Nspan            = [100];
         link.LL          = 0.6e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
@@ -23,15 +23,15 @@
 %         Gm1=(exp(al*link.LL)-1.d0);
 %         N0=link.Nspan*Gm1*HPLANCK*CLIGHT/(link.lambda* 1e-9)*amp.etasp;
         
-        nsc                  = [1,2,4,6,8];
-        nt                   = [1,2,4,6,8];       
+        nsc                  = [1,2,4];
+        nt                   = [1,2,4];       
         
-        pdbm                 = (-5:1:-1);
+        pdbm                 = (-6:1:0);
         
         signal_prop.nt       = 8;
         signal_prop.nc       = 5;  
         
-        pol                  = 2;
+        pol                  = 1;
    
         
         wdm.cch              = 3;
@@ -45,6 +45,8 @@
         gpu = 1;
        
         for m = 1:length(Nspan)
+            disp(Nspan(m));
+            tic
             for k = 1:length(nsc)
                 
                 
@@ -60,8 +62,6 @@
                 signal_prop.symbrate = sub_signal.symbrate*sub_signal.nsc;
                 signal_prop.nsymb    = sub_signal.nsymb*sub_signal.nt;
                 
-                nsc(k)
-                tic
                 parfor i = 1:length(pdbm)
                     
                     [signals{i},snr0dB(i),ch{i}] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
@@ -95,7 +95,7 @@
                     
                     
                 end
-                toc
+               
                 for i = 1:length(pdbm)
                     sgs(i).snr0dB = zeros(length(pdbm),1);
                     sgs(i).snr0dB(1:i) = snr0dB(1:i);
@@ -104,11 +104,14 @@
                 ch_properties       = ch{1}.getProperties;
                 ch_properties.Nspan = link.Nspan;
                 if ( pol == 2 )
-                    savefile = horzcat('contTest_my_sgs_dp_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
+                    savefile = horzcat('my_sgs_dp_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
                 else
-                    savefile = horzcat('contTest_my_sgs_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
+                    savefile = horzcat('my_sgs_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
                 end
                 save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm','-v7.3');
                 clear signals ;
             end
+            t = toc;
+            disp(horzcat('Total time: ',num2str(round(t/60/60,2)),'hours'));
+            
         end

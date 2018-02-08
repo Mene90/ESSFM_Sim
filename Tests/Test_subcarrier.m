@@ -129,8 +129,11 @@ else
     end
 end
 
-MuxDemux.Mux(Eoptx,Eopty,sig);
-
+if(pol == 2)
+    MuxDemux.Mux(Eoptx,Eopty,sig);
+else
+    MuxDemux.Mux(Eoptx,[],sig);    
+end
 %% Propagation
     if gpu
         gpu_propagation(ch,Nspan,ampli,sig);
@@ -168,7 +171,11 @@ set(sig,'FIELDY',zfieldy(:,cch));
      set(sig, 'FIELDY_TX', sub_sig{cch}.FIELDY_TX);
      set(sig, 'NT', sub_signal.nt);
      Laser.GetLaserSource(Pavg,sig,lambda,0);
-     [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0);
+     if (pol == 2)
+         [sig.SUB_FIELDX,sig.SUB_FIELDY] = MuxDemux.Demux(sig,oHf,0);
+     else
+         sig.SUB_FIELDX = MuxDemux.Demux(sig,oHf,0);
+     end
      dsp.scdownsampling(sig);
  end
  

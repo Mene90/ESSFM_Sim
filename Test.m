@@ -108,11 +108,11 @@ switch n
         link.disp        = 3;
         link.n2          = 2.5e-20;
         link.lambda      = 1550;
-        link.sprop       = 50;
+        link.sprop       = 25;
         
-        sp.bprop    = 50;
+        sp.bprop    = 25;
         
-        amp.etasp   = 2;
+        amp.etasp   = 1.7;
         amp.type    = 'EDFA';
         amp.Fn      = 10*log10(2*amp.etasp);
         
@@ -137,24 +137,25 @@ switch n
         C       =   log2(1+SNR);
         SNR_dB  =   10*log10(SNR);
         
-        gpu     =   0;
+        gpu     =   1;
         
-        for j = 1:length(compensation)
-            for i=1:length(pdbm)
+%         for j = 1:length(compensation)
+            parfor i=1:length(pdbm)
 %                 link.LL          = LL(i);
-                link.Nspan       = Nspan(i);
-                [signals{i},SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation(1),gpu,pls);
+%                 link.Nspan       = Nspan(i);
+                [signals{i},SNRdB{i},ch{i}] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation(1),gpu,pls);
             end
             
-            ch_properties       = ch.getProperties;
+            ch_properties       = ch{1}.getProperties;
             ch_properties.Nspan = Nspan;
             ch_properties.LL    = LL;
             
-            savefile        = char(strcat('Test_Results/Test3',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'_roll_02'));
-            
+%             savefile        = char(strcat('Test_Results/Test3',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'_roll_02'));
+            savefile = horzcat('Test_Results/Test3/G_',int2str(link.LL/1000),'X',int2str(link.Nspan),'NoCompensation');
             save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','pls','-v7.3');
+%         end
             
-      end
+
         
     case 4
         
@@ -204,7 +205,7 @@ switch n
 % >>>>>>> 54b6c003a0546510bdcf15474094d40eb801016f
         end
         
-        
+         
 %       
 %         
 %         for i =1:length(pdbm)
