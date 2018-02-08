@@ -53,7 +53,7 @@ obw    = 1;       % optical filter bandwidth
 Gerbio    = alphadB*LL*1e-3;
 etasp     = amp.etasp;
 amptype   = amp.type;
-ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,amptype);
+ampli     = Ampliflat(Pavg,ch,Gerbio,etasp,amptype,Nsapn);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Matched filter                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
