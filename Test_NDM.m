@@ -12,11 +12,11 @@
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
-        link.sprop       = 1;
+        link.sprop       = 1000;
         link.nlindex     = 2.5e-20;
         link.disp        = 17;
         
-        sp.bprop    = 1;
+        sp.bprop    = 100;
         
         amp.type    = 'Raman';
         amp.etasp   = 1;
