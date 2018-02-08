@@ -15,7 +15,7 @@ classdef Ampliflat
           
           if (strcmp(type,'Raman'))            
             ktusual     = etasp;
-            amp.N0      = ch.Lf*ch.alphalin*amp.HPLANCK*amp.CLIGHT/(ch.lambda * 1e-9)*ktusual/Pavg*Nsapn;
+            amp.N0      = ch.Lf*ch.alphalin*amp.HPLANCK*amp.CLIGHT/(ch.lambda * 1e-9)*ktusual/Pavg*Nspan;
             ch.alphadB  = 0;
             ch.alphalin = 0;            
           else                                                 

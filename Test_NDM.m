@@ -2,6 +2,7 @@
         parpool(2);        
 
         clear all;
+        clc;
         
         HPLANCK = 6.62606896e-34;       % Planck's constant [J*s]
         CLIGHT = 299792458;             % speed of light [m/s]
