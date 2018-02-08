@@ -11,27 +11,18 @@ classdef Ampliflat
     
     methods
         
-        function amp = Ampliflat(Pavg,ch,G,etasp,type)
+        function amp = Ampliflat(Pavg,ch,Gm1,etasp,type,Nspan)
           
           if (strcmp(type,'Raman'))            
             ktusual     = etasp;
-            amp.N0      = ch.Lf*ch.alphalin*amp.HPLANCK*amp.CLIGHT/(ch.lambda * 1e-9)*ktusual/Pavg;
+            amp.N0      = ch.Lf*ch.alphalin*amp.HPLANCK*amp.CLIGHT/(ch.lambda * 1e-9)*ktusual/Pavg*Nsapn;
             ch.alphadB  = 0;
             ch.alphalin = 0;            
-          else              
-            Gm1     = (10^(G*0.1)-1.d0);                              % (G-1)            
+          else                                                 
             amp.N0  = etasp*(Gm1)*amp.HPLANCK*amp.CLIGHT...
-                        /(ch.lambda * 1e-9)/Pavg;                    
-%             amp.N0  = etasp*(G)*amp.HPLANCK*amp.CLIGHT...
-%                         /(ch.lambda * 1e-9)*Nspan;
+                        /(ch.lambda * 1e-9)*Nspan;
           end
           
-%           amp.N0 = amp.N0*Nspan;
-          
-%             N0=Gm1*obj.HPLANCK*obj.CLIGHT/(ch.lambda * 1e-9)*etasp;  % Accumulate ASE Noise PSD
-% %             SNR=Pavg/(ch.signal.SYMBOLRATE * 1e+9)/N0;
-%             SNR=1/(ch.signal.SYMBOLRATE * 1e+9)/N0;
-%             obj.sigma=sqrt(ch.signal.NT*0.5/SNR);
         end
                                
         function AddNoise(amp,sig)
@@ -39,6 +30,22 @@ classdef Ampliflat
             nfft  = sig.NSYMB * sig.NT;
             Df    = sig.SYMBOLRATE*sig.NT*1e+9;
             sigma = ones(sig.NSYMB * sig.NT,1)*sqrt(0.5*amp.N0*Df);
+                        
+            noiseX = sigma.* (randn(nfft,1)+1i*randn(nfft,1));
+            set(sig,'FIELDX', sig.FIELDX + noiseX);
+            
+            if(any(sig.FIELDY))
+                noiseY = sigma.* (randn(nfft,1)+1i*randn(nfft,1));
+                set(sig,'FIELDY', sig.FIELDY + noiseY);
+            end
+            
+        end
+        
+        function AddNoiseXspan(amp,sig,Nspan)
+            
+            nfft  = sig.NSYMB * sig.NT;
+            Df    = sig.SYMBOLRATE*sig.NT*1e+9;
+            sigma = ones(sig.NSYMB * sig.NT,1)*sqrt(0.5*amp.N0/Nspan*Df);
                         
             noiseX = sigma.* (randn(nfft,1)+1i*randn(nfft,1));
             set(sig,'FIELDX', sig.FIELDX + noiseX);

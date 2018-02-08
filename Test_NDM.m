@@ -1,6 +1,8 @@
-%         clc;
-        clear all;
+        delete(gcp('nocreate'));
+        parpool(2);        
 
+        clear all;
+        
         HPLANCK = 6.62606896e-34;       % Planck's constant [J*s]
         CLIGHT = 299792458;             % speed of light [m/s]
       
@@ -10,28 +12,27 @@
         link.LL          = 1e5;
         link.attenuation = 0.2;
         link.lambda      = 1550;
-        link.sprop       = 1000;
+        link.sprop       = 1;
         link.nlindex     = 2.5e-20;
         link.disp        = 17;
         
-        sp.bprop    = 100;
+        sp.bprop    = 1;
         
         amp.type    = 'Raman';
         amp.etasp   = 1;
         amp.Fn      = 10*log10(2*amp.etasp);
 
         
-        nsc                  = [1,2,4];
-        nt                   = [1,2,4];       
+        nsc                  = [1,2,4,6,8];
+        nt                   = [1,2,4,6,8];       
         
-        pdbm                 = (-6:1:0);
+        pdbm                 = (-10:1:-5);
         
         signal_prop.nt       = 8;
         signal_prop.nc       = 5;  
         
-        pol                  = 1;
-   
-        
+        pol                  = 2;
+           
         wdm.cch              = 3;
         
         pls.shape   = 'RC';                       % Shape type
@@ -60,9 +61,9 @@
                 signal_prop.symbrate = sub_signal.symbrate*sub_signal.nsc;
                 signal_prop.nsymb    = sub_signal.nsymb*sub_signal.nt;
                 
-                parfor i = 1:length(pdbm)
+                for i = 1:length(pdbm)
                     
-                    [signals{i},snr0dB(i),ch{i}] = Test_subcarrier(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
+                    [signals{i},snr0dB(i),ch{i}] = NDM_subcarrier_propagation(link,sp,signal_prop,sub_signal,amp,pdbm(i),wdm,pls,pol,gpu);
                     
                     sgs(i).sg = 1/sqrt(sub_signal.nsc);
                     sgs(i).Pu = pdbm(i);
@@ -105,14 +106,9 @@
                  if ( pol == 2 )
                     savefile = horzcat('my_sgs_dp_IDA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
                 else
-                    savefile = horzcat('my_sgs_IDA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
+                    savefile = horzcat('my_sgs_sp_IDA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
                 end
                 
-%                 if ( pol == 2 )
-%                     savefile = horzcat('contTest_my_sgs_dp_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
-%                 else
-%                     savefile = horzcat('contTest_my_sgs_LA_wdm5_',int2str(Nspan(m)),'x60_',int2str(sub_signal.nsc),'sc');
-%                 end
                 save(savefile,'sgs','ch_properties','amp','signal_prop','pdbm','-v7.3');
                 clear signals ;
             end

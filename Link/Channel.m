@@ -66,7 +66,7 @@ classdef Channel < matlab.mixin.SetGet
             set(sig,'FIELDY', gpuArray(complex(get(sig,'FIELDY'))));
             
             for i = 1:Nspan
-                AddNoise(ampli,sig);
+                AddNoiseXspan(ampli,sig,Nspan);
                 sing_span_propagation(ch,sig,1);
             end
             
@@ -80,7 +80,7 @@ classdef Channel < matlab.mixin.SetGet
         
         function propagation(ch,Nspan,ampli,sig)
             for i = 1:Nspan
-                AddNoise(ampli,sig);
+                AddNoiseXspan(ampli,sig,Nspan);
                 sing_span_propagation(ch,sig,0);
             end
         end
