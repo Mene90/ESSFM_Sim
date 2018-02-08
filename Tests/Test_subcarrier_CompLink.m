@@ -17,9 +17,11 @@ S         = 0;                    % slope [ps/nm^2/km] @ wavelength
 Ns_prop   = link.sprop;           % number of SSFM propagation step
 Nspan     = link.Nspan;           % total number of amplifiers
 
+ch_gm     = 0.00127; 
+
 pmd       = false;                % pmd enable/disable
 
-ch       = Channel(LL,alphadB,lambda,aeff,n2,D,S,Ns_prop);
+ch       = Channel(LL,alphadB,lambda,aeff,n2,D,S,Ns_prop,ch_gm);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                     Comp Link parameters                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,16 +31,17 @@ n2        = 4.8e-20;                    % nonlinear index [m^2/W]
 lambda    = link.lambda;                % wavelength [nm] @ dispersion
 D         = -100;                       % dispersion [ps/nm/km] @ wavelength
 S         = 0;                          % slope [ps/nm^2/km] @ wavelength
-comp_LL   = -link.disp*link.LL/1e3/D*1e3;    % comp. fiber length [m];           
+comp_LL   = -link.disp*link.LL/1e3/D*1e3;    % comp. fiber length [m];  
+comp_gm   = 0.0065;
 
-Ns_prop   = 100;                        % number of SSFM propagation step
+Ns_prop   = 1000;                        % number of SSFM propagation step
 
-comp_ch   = Channel(comp_LL,comp_alphadB,lambda,aeff,n2,D,S,Ns_prop);
+comp_ch   = Channel(comp_LL,comp_alphadB,lambda,aeff,n2,D,S,Ns_prop,comp_gm);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         DSP parameters                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Ns_bprop      = sp.bprop;              % SSFM and ESSFM backpropagation steps
-Ns_bprop_comp = 10;
+Ns_bprop_comp = 100;
 dsp           = DSP(ch,Ns_bprop);
 dsp_comp      = DSP(comp_ch,Ns_bprop_comp);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,7 +49,7 @@ dsp_comp      = DSP(comp_ch,Ns_bprop_comp);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 symbrate = signal.symbrate;           % symbol rate             [Gbaud]
 Ps_dBm   = pdbm;                      % Power vector            [dBm]
-Pavg     = 10.^(0.1*(Ps_dBm-30));     % Power vector            [W]
+Pavg     = 10.^(0.1*(Ps_dBm-3));     % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = signal.nsymb;              % number of symbols
 Nt       = signal.nt;                 % points x symbol
@@ -56,7 +59,7 @@ sig      = Signal(Nsymb,Nt,symbrate,lambda,signal.nc);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 symbrate = sub_signal.symbrate;       % symbol rate             [Gbaud]
 Ps_dBm   = pdbm;                      % Power vector            [dBm]
-Pavg     = 10.^(0.1*(Ps_dBm -30));    % Power vector            [W]
+Pavg     = 10.^(0.1*(Ps_dBm-30));    % Power vector            [W]
 Plen     = length(Ps_dBm);  
 Nsymb    = sub_signal.nsymb;              % number of symbols
 Nt       = sub_signal.nt;                 % points x symbol
@@ -94,7 +97,8 @@ Pu1   = 10.^(0.1*(Pu1dB-30));
 
 % ampli02   = Ampliflat(Pavg,comp_ch,Gerbio02,etasp02,amptype,Nspan);
 
-Gm1       = (10^(Gerbio01*0.1)-1.d0)/Pu1 + (10^(Gerbio02*0.1)-1.d0)/Pavg ;
+% Gm1       = (10^(Gerbio01*0.1)-1.d0)/Pu1 + (10^(Gerbio02*0.1)-1.d0)/Pavg ;
+Gm1       = (10^(Gerbio01*0.1)-1.d0)/Pavg + (10^(Gerbio02*0.1)-1.d0)/Pu1 ;
 ampli01   = Ampliflat(Pu1,ch,Gm1,etasp01,amptype,Nspan);
 
 %% Subcarrier creation
@@ -112,11 +116,11 @@ for ii = 1:sig.NCH
                 sub_Eopty(:,j) = Modulator.ApplyModulation([],sub_cmapy(:,j),sub_sig{ii},pls);
             end
         else
-%             sub_Eoptx(:,j)   = sub_cmapx(:,j);
-            sub_Eoptx(:,j) = Modulator.ApplyModulation([],sub_cmapx(:,j),sub_sig{ii},pls);
+            sub_Eoptx(:,j)   = sub_cmapx(:,j);
+%             sub_Eoptx(:,j) = Modulator.ApplyModulation([],sub_cmapx(:,j),sub_sig{ii},pls);
             if (pol == 2 )
-                sub_Eopty(:,j) = Modulator.ApplyModulation([],sub_cmapy(:,j),sub_sig{ii},pls);
-%                 sub_Eopty(:,j) = sub_cmapy(:,j);
+%                 sub_Eopty(:,j) = Modulator.ApplyModulation([],sub_cmapy(:,j),sub_sig{ii},pls);
+                sub_Eopty(:,j) = sub_cmapy(:,j);
             end
         end
     end
@@ -184,7 +188,7 @@ end
         sing_span_propagation(comp_ch,sig,gpu);
 %         AddNoise(ampli02,sig);        
     end
-    
+%     
     AddNoise(ampli01,sig);
     set(sig,'POWER',Pavg);
     set(sig,'FIELDX', gather(get(sig,'FIELDX')));
@@ -216,7 +220,7 @@ set(sig,'FIELDY',zfieldy(:,cch));
         backpropagation(dsp_comp,Pu1*10^(-Gerbio02*0.1),sig,1,'ssfm',0);
         set(sig,'POWER',Pavg);
         backpropagation(dsp,Pavg*10^(-Gerbio01*0.1),sig,1,'ssfm',0);        
-    end
+     end
     
     set(sig,'FIELDX', gather(get(sig,'FIELDX')));
     set(sig,'FIELDY', gather(get(sig,'FIELDY')));
@@ -260,7 +264,8 @@ set(sig,'FIELDY',zfieldy(:,cch));
  
  
  signals      = sig.getproperties();
- Gm1          = (10^(Gerbio01*0.1)-1.d0)/Pu1 + (10^(Gerbio02*0.1)-1.d0)/Pavg ;
+%  Gm1          = (10^(Gerbio01*0.1)-1.d0)/Pu1 + (10^(Gerbio02*0.1)-1.d0)/Pavg;
+ Gm1       = (10^(Gerbio01*0.1)-1.d0)/Pavg + (10^(Gerbio02*0.1)-1.d0)/Pu1 ;
  N0           = etasp01*(Gm1)*HPLANCK*CLIGHT/(ch.lambda * 1e-9);
  SNRdB        = 10*log10(1/(symbrate*sub_signal.nsc)/10^9/N0/Nspan);
  

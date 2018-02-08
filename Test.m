@@ -1,4 +1,4 @@
-%nlindex = [1.1e-20,2.5e-20,5e-20];
+% nlindex = [1.1e-20,2.5e-20,5e-20];
 
 HPLANCK = 6.62606896e-34;       % Planck's constant [J*s]
 CLIGHT = 299792458;             % speed of light [m/s]
@@ -100,17 +100,18 @@ switch n
         distribution     = input('Enter a distribution: ');
         compensation     = [string('ssfm_onlydispcomp'),string('ssfm_onlykercomp'), string('inline')];
         compname         = [string('DispComp'),string('KerrComp'),string('inlineDispComp')];
-        Nspan            = (10);  
+        Nspan            = (1:5);  
         link.Nspan       = Nspan(1);
-        LL               = (1e5);
+        LL               = (0.8e5);
         link.LL          = LL(1);
         link.attenuation = 0.2;
-        link.disp        = 3;
+        link.disp        = 16;
         link.n2          = 2.5e-20;
-        link.lambda      = 1550;
+        link.lambda      = 1550;        
         link.sprop       = 25;
         
         sp.bprop    = 25;
+
         
         amp.etasp   = 1.7;
         amp.type    = 'EDFA';
@@ -131,30 +132,35 @@ switch n
 %         SNR_dB   = (-10:10:60);
 %         pdbm     = 30+10*log10(signal_prop.symbrate*10^9*N0*10.^(SNR_dB*0.1));
 
-        pdbm    =   (-10:1:10);
+        pdbm    =   [2,4,6,8,15];%(-10:1:10);
         P       =   10.^((pdbm-30)*0.1);
         SNR     =   P/signal_prop.symbrate/10^9/N0;
         C       =   log2(1+SNR);
         SNR_dB  =   10*log10(SNR);
         
         gpu     =   1;
-        
-%         for j = 1:length(compensation)
-            parfor i=1:length(pdbm)
+
+        for j = 1:length(pdbm)
+            for i=1:length(Nspan)
 %                 link.LL          = LL(i);
-%                 link.Nspan       = Nspan(i);
-                [signals{i},SNRdB{i},ch{i}] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(i),distribution,compensation(1),gpu,pls);
+                link.Nspan       = Nspan(i);
+                [signals{i},sig_dbp,SNRdB{i},ch] = TestDispOrKerrComp(link,sp,signal_prop,amp,pdbm(j),distribution,compensation(1),gpu,pls);
             end
             
             ch_properties       = ch{1}.getProperties;
             ch_properties.Nspan = Nspan;
             ch_properties.LL    = LL;
+            power.pdbm = pdbm(j);
             
 %             savefile        = char(strcat('Test_Results/Test3',distribution,'_',compname(j),'_',int2str(link.LL/1000),'X',int2str(link.Nspan),'_nt_',int2str(signal_prop.nt),'_roll_02'));
             savefile = horzcat('Test_Results/Test3/G_',int2str(link.LL/1000),'X',int2str(link.Nspan),'NoCompensation');
             save(savefile,'signals','SNRdB','ch_properties','amp','signal_prop','pdbm','pls','-v7.3');
 %         end
             
+
+
+            
+         end
 
         
     case 4

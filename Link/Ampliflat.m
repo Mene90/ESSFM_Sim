@@ -11,17 +11,19 @@ classdef Ampliflat
     
     methods
         
-        function amp = Ampliflat(Pavg,ch,G,etasp,type,Nspan)
+        function amp = Ampliflat(Pavg,ch,G,etasp,type)
           
           if (strcmp(type,'Raman'))            
             ktusual     = etasp;
             amp.N0      = ch.Lf*ch.alphalin*amp.HPLANCK*amp.CLIGHT/(ch.lambda * 1e-9)*ktusual/Pavg;
             ch.alphadB  = 0;
-            ch.alphalin = 0;              
+            ch.alphalin = 0;            
           else              
             Gm1     = (10^(G*0.1)-1.d0);                              % (G-1)            
             amp.N0  = etasp*(Gm1)*amp.HPLANCK*amp.CLIGHT...
-                        /(ch.lambda * 1e-9)/Pavg;          
+                        /(ch.lambda * 1e-9)/Pavg;                    
+%             amp.N0  = etasp*(G)*amp.HPLANCK*amp.CLIGHT...
+%                         /(ch.lambda * 1e-9)*Nspan;
           end
           
 %           amp.N0 = amp.N0*Nspan;

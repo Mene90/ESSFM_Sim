@@ -1,4 +1,4 @@
-function [ signals,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,amp,pdbm,distribution,compensation,gpu,pls)
+function [ signals,signals_dbp,SNRdB,ch ] = TestDispOrKerrComp( link,sp,signal,amp,pdbm,distribution,compensation,gpu,pls)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                         Link parameters                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
